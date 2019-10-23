@@ -103,3 +103,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 *.ini
+Programa/alg_output.txt
+Programa/v_input.csv
+Programa/sol1.txt

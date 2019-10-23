@@ -18,8 +18,7 @@ class Populacao:                    #decidir como lidar com a população - como
 
     ### ADIÇÃO ################
 
-    def addSol(self, solx):         #adiciona uma solução a essa população
-        self.sols.update({len(self.sols) : solx}) 
+    def addSol(self, solx): self.sols.update({solx.idsol : solx}) #adiciona uma solução a essa população0\
         
     def excluiDet(self): #exclui deterministicamente as soluções com o maior custo
         qtde_solucoes_sobrando = len(self.sols)-self.npop #serão excluídas todas as soluções extras em relação à população máxima npop
@@ -29,7 +28,7 @@ class Populacao:                    #decidir como lidar com a população - como
             solucoes_sobrando = nlist[-qtde_solucoes_sobrando:]
             for i in solucoes_sobrando: self.sols.pop(i) #exclui da população as referidas soluções
         
-    ### GENÉTICOS - seleção ###################3
+    ### GENÉTICOS - seleção ###################
 
     def selecDet(self, n, idsols): #seleciona deterministicamente as n soluções com menor custo
         #duplicatas = [key for key in self.sols if self.sols[key].idsol in idsols]
@@ -58,13 +57,17 @@ class Populacao:                    #decidir como lidar com a população - como
         custos = [c + maxc*gl.probabMaiorCusto for c in custos] # adiciona um piso de probabilidade para o com maior custo não ser zero
         #print("custos + 0.05*maxcustos", custos)
         somac = sum(custos) 
-        #print("soma2", somac)
-        custos = [c/somac for c in custos] # normalizados. agora podem ser usados como pesos
-        #print("custos pesos", custos)
-        
-        nchoices = np.random.choice(nlist, size=n, replace=False, p=custos)
-        #print("retorna", nchoices)
-        return nchoices
+        print("soma2", somac)
+        if somac > 0:
+            custos = [c/somac for c in custos] # normalizados. agora podem ser usados como pesos
+            print("custos pesos", custos)        
+            nchoices = np.random.choice(nlist, size=n, replace=False, p=custos)
+            print("retorna", nchoices)
+            return nchoices
+        else:
+            nchoices = np.random.choice(nlist, size=n, replace=False)
+            gl.custosIguais = gl.custosIguais+1
+            return nchoices
 
     ### PRINTS ##################################
     
@@ -73,7 +76,7 @@ class Populacao:                    #decidir como lidar com a população - como
         print("FUNÇÃO PRINT POPULAÇÃO")
         print("")
                 
-        for i in range(len(self.sols)):
+        for i in self.sols:
             print ("Solução numero", i, "--------------------------------")
             self.sols[i].prsol()
             print ("Custo = ", self.sols[i].custo())

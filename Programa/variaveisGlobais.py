@@ -8,34 +8,42 @@ import datetime as dtm
 import pandas as pd
 import classPopulacao as pp
 
-# PARAMETROS######################################################################3
-# Controle do Algoritmo
-na = 40       #população com que começa A
-nb = 5        #população com que B permanece sempre
-nc = 30       # 
-nvInic = 1      #nº viagens a adicionar na solução inicial
-nCruz = 1      #nº soluções filhas adicionadas no cruzamento
-nMut = 5      #nº soluções filhas adicionadas na mutação
-nTop = 10       #nº soluções que sobrevivem na seleção Deterministica final
-nRol = 10
+# Caminhos das Pastas
+folder = "C:\\Users\\Daniel\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
+inputPath = folder + "v_input.csv"
+outputPath = folder + "alg_output.txt"
+
+# PARÂMETROS
+
+# Populações
+na = 20       #número de soluções na população A
+nb = 5        #número de soluções na população B
+nc = 15       #número de soluções na população C
+
+nvInic = 1      #nº viagens a adicionar aleatoriamente na solução inicial
+nCruz = 1       #nº soluções filhas adicionadas no cruzamento
+nMut = 3        #nº soluções filhas adicionadas na mutação
+nTop = 15       #nº soluções que sobrevivem na seleção Deterministica final
+nRol = 10       #nº soluções que sobrevivem na seleção Roleta final
 nCompl = 1      #nº soluções completas exigidas para que o algoritmo pare
-alg = 1000        #n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
-# Listagem de Serviços e Soluções
-idsGlob = 0     #contador de serviços global, para o identificador IDS
-idsolGlob = 0   #contador de soluções global, para o identificador IDSOL
-jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
+
 # Pesos dos custos
 alfa = 1.4
 delta = 1
 tau = 1
-gama = 19
-duplicatas = 0
-maiorSolucao = 0
+gama = 1
 probabMaiorCusto = 0.08
 
-inputPath = "C:\\Users\\Daniel\\Google Drive\\TCC Daniel Acosta\\Codigo\\Programa\\v_input.csv"
-outputPath = "C:\\Users\\Daniel\\Google Drive\\TCC Daniel Acosta\\Codigo\\Programa\\alg_output.txt"
+# Listagens e Iteradores
+alg = 1000        #n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
+idsGlob = 0     #contador de serviços global, para o identificador IDS
+idsolGlob = 0   #contador de soluções global, para o identificador IDSOL
+jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
+duplicatas = 0
+maiorSolucao = 0
+custosIguais = 0
 
+# População de Soluções Completas
 popCompl = pp.Populacao(nCompl)
 
 def colideHorario(i1,i2):    #funçao que testa se o horario das viagens colide (condiçao 1)   
@@ -48,10 +56,9 @@ def colideHorario(i1,i2):    #funçao que testa se o horario das viagens colide 
         return True 
     else: return False #viagens não colidem
 
-#%% LEITURA DO ARQUIVO DE INPUT
+### LEITURA DO ARQUIVO DE INPUT ############
 
 dfv = pd.read_csv(inputPath, sep=';', index_col=0) 
-
 for i in range(0,len(dfv)):             # Confusão absurda pra colocar a data na classe datetime de acordo com a tabela sábado ou sexta ou domingo
     if i==0:
         iniciodiai = 0
@@ -82,14 +89,10 @@ for i in range(0,len(dfv)):             # Confusão absurda pra colocar a data n
     dfv.iloc[i,2]=dtm.datetime(2019,6,diai,int(dfv.iloc[i,2][0:2]),int(dfv.iloc[i,2][3:5]),0)
     dfv.iloc[i,3]=dtm.datetime(2019,6,diaf,int(dfv.iloc[i,3][0:2]),int(dfv.iloc[i,3][3:5]),0)
     dfv.iloc[i,6]=dfv.iloc[i,3]-dfv.iloc[i,2]
-    
 dfv.drop(columns="tab", inplace=True)   # excluir a coluna tab, porque aparentemente não vai mais ser necessário.
-
 vdict = dfv.to_dict()
 
-#%% CUSTO
-
-"""deve ser alterado quando for adicionado jornadas variaveis... esses custos todos talvez precisem entrar pra função custo da classe solução"""
+### CUSTO ############
 
 dursViags = list(vdict['dur'].values())
 durMediaViags = sum(dursViags, dtm.timedelta(0))/len(dursViags)
