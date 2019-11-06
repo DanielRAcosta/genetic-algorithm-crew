@@ -26,11 +26,12 @@ class Servico:
 
     ############# DURAÇÕES ##################    
     def hi(self):              #primeiro horario da primeira viagem alocada + tempo extra
-        hList = [gl.vdict['hi'][vx] for vx in gl.vdict['hi']] #cria uma lista com todas as horas iniciais das viagens    
+        hList = [gl.vdict['hi'][vx] for vx in self.viags] #cria uma lista com todas as horas iniciais das viagens    
         return min(hList)
     
     def hf(self):      #ultimo horario da ultima viagem alocada + tempo extra (quando add tempo extra cuidar aqui e na cabeJornada)
-        hList = [gl.vdict['hf'][vx] for vx in gl.vdict['hf']]
+        hList = [gl.vdict['hf'][vx] for vx in self.viags]
+        
         return max(hList)
 
     def condEf(self):          #calcula a condução efetiva - suponho que seja a soma de todas as durações de viagens
