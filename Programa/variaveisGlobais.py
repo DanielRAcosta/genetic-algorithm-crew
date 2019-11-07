@@ -7,11 +7,8 @@ Created on Tue Oct 15 16:26:37 2019
 import datetime as dtm
 import pandas as pd
 import classPopulacao as pp
+import os
 
-# Caminhos das Pastas
-folder = "C:\\Users\\Daniel\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
-inputPath = folder + "v_input.csv"
-outputPath = folder + "alg_output.txt"
 
 # PARÂMETROS
 
@@ -55,10 +52,15 @@ def colideHorario(i1,i2):    #funçao que testa se o horario das viagens colide 
             #print(i, "| Viagens comparadas têm mesmo ti ou tf")
         return True 
     else: return False #viagens não colidem
+# Caminhos das Pastas
+user = os.getlogin()
+folder = "C:\\Users\\"+user+"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
+inputViags = folder + "v_input.csv"
+logf = open(folder + "output\\logfile.txt", 'w')
 
 ### LEITURA DO ARQUIVO DE INPUT ############
 
-dfv = pd.read_csv(inputPath, sep=';', index_col=0) 
+dfv = pd.read_csv(inputViags, sep=';', index_col=0) 
 for i in range(0,len(dfv)):             # Confusão absurda pra colocar a data na classe datetime de acordo com a tabela sábado ou sexta ou domingo
     if i==0:
         iniciodiai = 0

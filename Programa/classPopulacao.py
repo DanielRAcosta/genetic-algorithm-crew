@@ -10,6 +10,20 @@ import variaveisGlobais as gl
 import random as rd
 import numpy as np
 import datetime as dtm
+import pickle as pk
+#import os
+
+def outpop(pop, nome):
+    nomefile = gl.folder+'output\\pop_'+nome+'.txt'
+    #os.remove(nomefile)
+    pkfile = open(nomefile, mode='bw')
+    pk.dump(pop,pkfile)
+    pkfile.close()
+    
+def inpop(nome):
+    pkfile = open(gl.folder+'output\\pop_'+nome+'.txt', mode='br')
+    return pk.load(pkfile)
+    pkfile.close()
 
 class Populacao:                    #decidir como lidar com a população - como lidar com o tamanho fixo?
     def __init__(self, npop):       #única classe que pode ser inicializada vazia (sem soluções)

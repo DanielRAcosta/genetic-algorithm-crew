@@ -12,16 +12,22 @@ import classSolucao as sl
 import classPopulacao as pp
 import variaveisGlobais as gl
 
-popA = pp.Populacao(gl.na)
-popB = pp.Populacao(gl.nb)
-popC = pp.Populacao(gl.nc)
-
-f = open(gl.outputPath, 'w')
-
 # INICIA O ALGORITMO #############################################################
 
-# CRIA grupo de soluções iniciais A a partir de E - input = leitura de vdict, n populacao A (gl.na)
-for i in range(gl.na): popA.addSol(sl.Solucao(sv.Servico(rd.randrange(1,len(gl.vdict['hi'])+1))))
+modo_inicio = 1
+# 0 = do zero / 1 = ler do binário
+
+if modo_inicio == 0:
+    popA = pp.Populacao(gl.na)
+    popB = pp.Populacao(gl.nb)
+    popC = pp.Populacao(gl.nc)
+    
+    # CRIA grupo de soluções iniciais A a partir de E - input = leitura de vdict, n populacao A (gl.na)
+    for i in range(gl.na): popA.addSol(sl.Solucao(sv.Servico(rd.randrange(1,len(gl.vdict['hi'])+1))))
+elif modo_inicio == 1:
+    popA = pp.inpop('a')
+    popB = pp.inpop('b')
+    popC = pp.Populacao(gl.nc)
 
 # INICIA O LAÇO PRINCIPAL #######################################################
 
@@ -84,7 +90,10 @@ for iAlg in range(gl.alg):
     
     # plota na tela o número máximo de viagens
     print(iAlg, popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol())
-    
-    
+
+if modo_inicio == 0:
+    pp.outpop(popA, 'a')    
+    pp.outpop(popB, 'b')    
+    pp.outpop(popC, 'c')    
 #Fim do laço   
 #%%
