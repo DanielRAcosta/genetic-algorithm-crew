@@ -10,27 +10,6 @@ import classPopulacao as pp
 import os
 
 
-# PARÂMETROS
-
-# Populações
-na = 20       #número de soluções na população A
-nb = 5        #número de soluções na população B
-nc = 15       #número de soluções na população C
-
-nvInic = 1      #nº viagens a adicionar aleatoriamente na solução inicial
-nCruz = 1       #nº soluções filhas adicionadas no cruzamento
-nMut = 3        #nº soluções filhas adicionadas na mutação
-nTop = 15       #nº soluções que sobrevivem na seleção Deterministica final
-nRol = 10       #nº soluções que sobrevivem na seleção Roleta final
-nCompl = 1      #nº soluções completas exigidas para que o algoritmo pare
-
-# Pesos dos custos
-alfa = 1.4
-delta = 1
-tau = 1
-gama = 1
-probabMaiorCusto = 0.08
-
 # Listagens e Iteradores
 alg = 1000        #n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
 idsGlob = 0     #contador de serviços global, para o identificador IDS
@@ -94,9 +73,39 @@ for i in range(0,len(dfv)):             # Confusão absurda pra colocar a data n
 dfv.drop(columns="tab", inplace=True)   # excluir a coluna tab, porque aparentemente não vai mais ser necessário.
 vdict = dfv.to_dict()
 
+# PARÂMETROS
+
+# Pesos dos custos
+alfa = 1.5
+delta = 0.5
+tau = 1.5
+gama = 4 
+probabMaiorCusto = 0.08
+
+# Populações
+fs = 0.2
+na = 10       #número de soluções na população A
+nb = 5        #número de soluções na população B
+nc = round(fs*na*(len(vdict['hi'])+na+nb))       #número de soluções na população C
+
+pm = 0.02
+nvInic = 1      #nº viagens a adicionar aleatoriamente na solução inicial
+nCruz = 1       #nº soluções filhas adicionadas no cruzamento
+nMut = 5        #nº soluções filhas adicionadas na mutação
+nTop = 15       #nº soluções que sobrevivem na seleção Deterministica final
+nRol = 10       #nº soluções que sobrevivem na seleção Roleta final
+nCompl = 1      #nº soluções completas exigidas para que o algoritmo pare
+
+
+
+
+
+    
+
 ### CUSTO ############
 
 dursViags = list(vdict['dur'].values())
 durMediaViags = sum(dursViags, dtm.timedelta(0))/len(dursViags)
 hmus = dtm.timedelta(hours=2) # 2h de intervalos (30min / 1h / 30min) - estimativa da folga mínima que se pode alcançar em um serviço
 viagsPorServ = (jornGlob-hmus) / durMediaViags 
+
