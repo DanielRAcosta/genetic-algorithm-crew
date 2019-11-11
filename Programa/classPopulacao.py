@@ -29,10 +29,25 @@ class Populacao:                    #decidir como lidar com a população - como
     def __init__(self, npop):       #única classe que pode ser inicializada vazia (sem soluções)
         self.sols = {}              #dicionario de soluções que compoem a populaçao
         self.npop = npop            #populaçao maxima escolhida
+    
 
     ### ADIÇÃO ################
 
     def addSol(self, solx): self.sols.update({solx.idsol : solx}) #adiciona uma solução a essa população0\
+
+    def addSolCheck(self, solx):
+        solx.sortV()
+        custox = solx.custo()
+        contemx = False
+        for soly in self.sols:
+            self.sols[soly].sortV()
+            if self.sols[soly].viagSol == solx.viagSol and self.sols[soly].custo() == custox: contemx = True
+            
+        if contemx:
+            gl.logf.write("\n[addSolCheck - pop "+str(len(self.sols))+"] Filho não adicionado à população.")
+        else:
+            self.addSol(solx) #filho EC
+            gl.logf.write("\n[addSolCheck - pop "+str(len(self.sols))+"] Filho adicionado à população.")
         
     def excluiDet(self): #exclui deterministicamente as soluções com o maior custo
         qtde_solucoes_sobrando = len(self.sols)-self.npop #serão excluídas todas as soluções extras em relação à população máxima npop

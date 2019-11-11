@@ -20,6 +20,14 @@ if gl.modo_inicio == 0:
     popC = pp.Populacao(gl.nc)
     
     # CRIA grupo de soluções iniciais A a partir de E - input = leitura de vdict, n populacao A (gl.na)
+    randlist = []
+    for i in range(gl.na):
+        vx = rd.randrange(1,len(gl.vdict['hi'])+1)
+        while vx in randlist: vx = rd.randrange(1,len(gl.vdict['hi'])+1)
+        randlist.append(vx)
+        
+    for vx in randlist: popA.addSol(sl.Solucao(sv.Servico(vx)))
+    
 elif gl.modo_inicio == 1:
     popA = pp.inpop('a')
     popB = pp.inpop('b')
@@ -36,19 +44,35 @@ for iAlg in range(gl.alg):
         # os pais dos cruzamentos aqui são buscados diretamente em A.
         for jSol in range(gl.nCruz): # cruza com E (vdict)
             ex = sl.Solucao(sv.Servico(popA.sols[iSol].viagNovaRandom())) # cria solução com viagem que ainda não existe em B
-            popC.addSol(popA.sols[iSol].cruza(ex.viagSol)) #filho CE
-            popC.addSol(ex.cruza(popA.sols[iSol].viagSol)) #filho EC
+            
+            
+            filho = popA.sols[iSol].cruza(ex.viagSol) 
+            popC.addSol(filho) #filho CE
+            gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CE adicionado a popC.")
+            filho2 = ex.cruza(popA.sols[iSol].viagSol)
+            popC.addSolCheck(filho2)
+            
+        for jSol in popA.selecRoleta(gl.nCruz,pais1): #cruza com A
+            
+            filho = popA.sols[iSol].cruza(popA.sols[jSol].viagSol)
+            popC.addSolCheck(filho)                
+            
+            filho2 = popA.sols[jSol].cruza(popA.sols[iSol].viagSol)
+            popC.addSolCheck(filho2)
         
-        for jSol in popA.selecRoleta(gl.nCruz,[]): #cruza com A
-            popC.addSol(popA.sols[iSol].cruza(popA.sols[jSol].viagSol)) #filho CA
-            popC.addSol(popA.sols[jSol].cruza(popA.sols[iSol].viagSol)) #filho AC
         
         if iAlg>0: #cruza com B
             for jSol in popB.selecRoleta(gl.nCruz,[]): 
                 popC.addSol(popA.sols[iSol].cruza(popB.sols[jSol].viagSol)) #filho CB
                 popC.addSol(popB.sols[jSol].cruza(popA.sols[iSol].viagSol)) #filho BC
                 
+                filho = popA.sols[iSol].cruza(popB.sols[jSol].viagSol)
+                popC.addSolCheck(filho) #filho CB
+                
         popC.addSol(popA.sols[iSol]) #só no final os pais advindos de A são adicionados à população, para que também sejam passíveis de mutação na próxima etapa
+                filho2 = popB.sols[jSol].cruza(popA.sols[iSol].viagSol)
+                popC.addSolCheck(filho2)
+            
         if gl.carregaPais == 1: popC.addSolCheck(popA.sols[iSol])
         #só no final os pais advindos de A são adicionados à população, para que também sejam passíveis de mutação na próxima etapa
 
