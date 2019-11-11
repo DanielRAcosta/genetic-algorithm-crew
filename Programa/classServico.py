@@ -43,32 +43,56 @@ class Servico:
     def cabeJornada(self,idvx): #checa se para realizar a viagem desejada, a jornada máxima não seria estourada
         # quando colocar os tempos extras do trabalhador chegar no deposito (fim e inicio de jornada), cuidar aqui também.
         if gl.vdict['hi'][idvx]>self.hf(): #caso 1 - viagem nova no final do serviço
-            if gl.vdict['hf'][idvx]-self.hi() < self.jorn: return True # CABE se mesmo colocando ela, não ultrapassa a jornada
-            else: return False # NAO CABE - ultrapassou               
+            if gl.vdict['hf'][idvx]-self.hi() < self.jorn:
+                #gl.logf.write("\n[cabeJornada] True Caso 1 - viagem cabe no final do serviço")
+                return True # CABE se mesmo colocando ela, não ultrapassa a jornada
+            else:
+                #gl.logf.write("\n[cabeJornada] False Caso 1 - viagem muito tarde")
+                return False # NAO CABE - ultrapassou               
         elif gl.vdict['hf'][idvx]<self.hi(): #caso 2 - viagem nova no inicio do serviço
-            if self.hf()-gl.vdict['hi'][idvx] < self.jorn: return True # CABE
-            else: return False # NAO CABE
-        elif gl.vdict['hi'][idvx]>self.hi() and gl.vdict['hf'][idvx]<self.hf(): return True # caso 3 - viagem nova dentro do serviço - não altera duração total
-        else: return False # pela lógica, a nova viagem está colidindo (tem interseção) com a última do serviço.
-            
-        
+            if self.hf()-gl.vdict['hi'][idvx] < self.jorn:
+                #gl.logf.write("\n[cabeJornada] True Caso 2 - viagem cabe no início do serviço")
+                return True # CABE
+            else:
+                #gl.logf.write("\n[cabeJornada] False Caso 2 - viagem muito cedo")
+                return False # NAO CABE
+        elif gl.vdict['hi'][idvx]>self.hi() and gl.vdict['hf'][idvx]<self.hf():
+            #gl.logf.write("\n[cabeJornada] True Caso 3 - viagem cabe no meio do serviço")
+            return True # caso 3 - viagem nova dentro do serviço - não altera duração total
+        else:
+            #gl.logf.write("\n[cabeJornada] False Caso 3 - viagem colide")
+            return False # pela lógica, a nova viagem está colidindo (tem interseção) com a última do serviço.
+                
     def encaixaTerminal(self, idvx): #verifica se os terminais da viagem encaixam no serviço
         i_hs = [idv for idv in self.viags if gl.vdict['hf'][idv] < gl.vdict['hi'][idvx]]
         hs = [gl.vdict['hf'][idv] for idv in self.viags if gl.vdict['hf'][idv] < gl.vdict['hi'][idvx]]
         try:
             anterior = i_hs[hs.index(max(hs))]
-            if gl.vdict['hf'][anterior]<=gl.vdict['hi'][idvx] and gl.vdict['tf'][anterior]==gl.vdict['ti'][idvx]: encaixa_ant = True
-            else: encaixa_ant = False 
-        except: encaixa_ant = True
+            if gl.vdict['hf'][anterior]<=gl.vdict['hi'][idvx] and gl.vdict['tf'][anterior]==gl.vdict['ti'][idvx]:
+                encaixa_ant = True
+                #gl.logf.write("\n[encaixaTerm] Encaixa Anterior True")
+            else:
+                encaixa_ant = False 
+                #gl.logf.write("\n[encaixaTerm] Encaixa Anterior False")
+        except:
+            encaixa_ant = True
+            #gl.logf.write("\n[encaixaTerm] Encaixa Anterior True - não existe viagem antes, então encaixa")
             
         i_hs = [idv for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
         hs = [gl.vdict['hi'][idv] for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
         try:
             posterior = i_hs[hs.index(min(hs))]
-            if gl.vdict['hf'][idvx]<=gl.vdict['hi'][posterior] and gl.vdict['tf'][idvx]==gl.vdict['ti'][posterior]: encaixa_post = True
-            else: encaixa_post = False 
-        except: encaixa_post = True
+            if gl.vdict['hf'][idvx]<=gl.vdict['hi'][posterior] and gl.vdict['tf'][idvx]==gl.vdict['ti'][posterior]:
+                encaixa_post = True
+                #gl.logf.write("\n[encaixaTerm] Encaixa Posterior True")
+            else:
+                encaixa_post = False 
+                #gl.logf.write("\n[encaixaTerm] Encaixa Posterior False")
+        except:
+            encaixa_post = True
+            #gl.logf.write("\n[encaixaTerm] Encaixa Posterior False - não viagem antes, então encaixa")
 
+        #gl.logf.write("\n[encaixaTerm] Encaixa Final "+ str( encaixa_ant and encaixa_post))
         return encaixa_ant and encaixa_post   
     
     #def testAlm:               

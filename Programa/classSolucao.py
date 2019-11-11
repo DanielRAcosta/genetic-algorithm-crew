@@ -40,20 +40,24 @@ class Solucao:
         self.sortV() #coloca as viagens em ordem ascendente
     
     def encaixaVSol(self,vx):
+        gl.logf.write("\n\n[encaixaVSol] Viagem "+str(vx)+ " | hi = "+str( gl.vdict['hi'][vx])+" | hf = "+str( gl.vdict['hf'][vx])+" | ti = "+str( gl.vdict['ti'][vx])+" | tf = "+str( gl.vdict['tf'][vx]))
         adicionou = False
         j = 0 #para percorrer cada serviço da solução
         while adicionou == False and j<len(self.servs): # percorre cada serviço da solução até chegar ao fim da lista de serviços
             #só encerra quando conseguir adicionar viagem (adicionou = 1)
+            #gl.logf.write("\n[encaixaVSol] Testa se a Viagem "+str(vx)+ " cabe no serviço "+str(j)+" pelas funções cabeJornada e encaixaTerminal")
             if self.servs[j].cabeJornada(vx) and self.servs[j].encaixaTerminal(vx): # cabe na jornada? CABE
                 """adicionar aqui as condições de Terminal e de Almoço"""
                 colide = 0 # percorrer todas as viagens do serviço atual da solução e ver se não colide
                 #print("Colide ", colide)
+                #gl.logf.write("\n[encaixaVSol] Testa se a Viagem "+str(vx)+ " cabe no serviço "+str( j)+" pela verificação de colisão com as viagens")
                 for vserv in self.servs[j].viags:
                     if gl.colideHorario(vx,vserv) == True:
-                        #print("Colidiu")
+                        #gl.logf.write("\n[encaixaVSol] A viagem "+ str(vx) + " colidiu com a viagem " +str(vserv)+ " no serviço "+str(j))
                         colide = colide + 1
                 if colide == 0:
 
+                    gl.logf.write("\n[encaixaVSol] A Viagem "+str(vx)+ " não colidiu com nenhuma viagem e atendeu aos outros três requisitos, portanto será adicionada no serviço "+str( j))
                     
                     self.servs[j].viags.append(vx)
                     self.servs[j].sortV()
@@ -70,6 +74,7 @@ class Solucao:
             #print("Fim do while -> j + 1 = ", j)
             if j == len(self.servs) and adicionou == False: #se chegou ao final da lista de serviços sem ter adicionado
                 adicionou = True
+                gl.logf.write("\n[encaixaVSol] A Viagem "+str(vx)+ " não coube em nenhum serviço portanto será criado um novo serviço")
                 self.addServ(sv.Servico(vx))
         return adicionou
 

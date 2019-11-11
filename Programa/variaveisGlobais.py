@@ -10,15 +10,6 @@ import classPopulacao as pp
 import os
 
 
-def colideHorario(i1,i2):    #funçao que testa se o horario das viagens colide (condiçao 1)   
-    if vdict['hi'][i2]>=vdict['hi'][i1] and vdict['hi'][i2]<vdict['hf'][i1]: return True #início da v2 está dentro da v1, mas v1 continua
-    elif vdict['hi'][i1]>=vdict['hi'][i2] and vdict['hi'][i1]<vdict['hf'][i2]: return True #início da v1 está dentro da v2, mas v2 continua
-    elif vdict['hi'][i1] == vdict['hi'][i2] or vdict['hf'][i1] == vdict['hf'][i2]: #ambas coincidem em pelo menos um horário
-        #print(i, "| Viagens comparadas têm mesmo hi ou hf.")
-        #if vdict['ti'][i1] == vdict['ti'][i2] or vdict['tf'][i1] == vdict['tf'][i2]: #as viagens são idênticas!!!
-            #print(i, "| Viagens comparadas têm mesmo ti ou tf")
-        return True 
-    else: return False #viagens não colidem
 # Caminhos das Pastas
 user = os.getlogin()
 folder = "C:\\Users\\"+user+"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
@@ -105,6 +96,22 @@ custosIguais = 0
 # População de Soluções Completas
 popCompl = pp.Populacao(nCompl)
 
+def colideHorario(i1,i2):    #funçao que testa se o horario das viagens colide (condiçao 1)   
+    if vdict['hi'][i2]>=vdict['hi'][i1] and vdict['hi'][i2]<vdict['hf'][i1]:
+        logf.write("\n[ColideHorario] Caso 1 - inicio da v2 está dentro da v1, mas v1 continua")
+        return True #início da v2 está dentro da v1, mas v1 continua
+    
+    elif vdict['hi'][i1]>=vdict['hi'][i2] and vdict['hi'][i1]<vdict['hf'][i2]:
+        logf.write("\n[ColideHorario] Caso 2 - inicio da v1 está dentro da v2, mas v2 continua")
+        return True #início da v1 está dentro da v2, mas v2 continua
+    
+    elif vdict['hi'][i1] == vdict['hi'][i2] or vdict['hf'][i1] == vdict['hf'][i2]: #ambas coincidem em pelo menos um horário
+        logf.write("\n[ColideHorario] Caso 3 - coincidem")
+        #print(i, "| Viagens comparadas têm mesmo hi ou hf.")
+        #if vdict['ti'][i1] == vdict['ti'][i2] or vdict['tf'][i1] == vdict['tf'][i2]: #as viagens são idênticas!!!
+            #print(i, "| Viagens comparadas têm mesmo ti ou tf")
+        return True 
+    else: return False #viagens não colidem
 
 
     
