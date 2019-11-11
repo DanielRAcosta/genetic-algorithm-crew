@@ -17,11 +17,7 @@ class Servico:
         self.jorn = gl.jornGlob    #por enquanto, utiliza a jornada globalmente definida de 7h30min.
         self.viags = [idvx]     #aqui não precisa ser guardada a viagem, só precisa guardar o index
 
-    ############### BASE ####################    
-    def atualizaViags(self,idvx):        #adiciona uma nova viagem a esse serviço, depois de já ter testado a viagem no testV.
-        self.viags.append(idvx)
-        self.sortV()       
-    
+    ############### BASE ####################               
     def sortV(self): self.viags.sort(key=lambda vx : gl.vdict['hi'][vx])
 
     ############# DURAÇÕES ##################    
@@ -31,7 +27,6 @@ class Servico:
     
     def hf(self):      #ultimo horario da ultima viagem alocada + tempo extra (quando add tempo extra cuidar aqui e na cabeJornada)
         hList = [gl.vdict['hf'][vx] for vx in self.viags]
-        
         return max(hList)
 
     def condEf(self):          #calcula a condução efetiva - suponho que seja a soma de todas as durações de viagens

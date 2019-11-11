@@ -95,8 +95,10 @@ class Populacao:                    #decidir como lidar com a população - como
             self.sols[i].prsol()
             print ("Custo = ", self.sols[i].custo())
     
-    def maxViagSol(self):
-        return max([len(self.sols[iSol].viagSol) for iSol in self.sols])
+    def sizeViagSol(self): return [len(self.sols[iSol].viagSol) for iSol in self.sols]
+    
+    def sizeServSol(self): return [len(self.sols[iSol].servs) for iSol in self.sols]
     
     def prSolCost(self):
-        for iSol in self.sols: print(iSol, " - custo ", self.sols[iSol].custo())
+        for iSol in self.sols: print(iSol,',', self.sols[iSol].custo(), ',')
+    

@@ -10,18 +10,6 @@ import classPopulacao as pp
 import os
 
 
-# Listagens e Iteradores
-alg = 1000        #n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
-idsGlob = 0     #contador de serviços global, para o identificador IDS
-idsolGlob = 0   #contador de soluções global, para o identificador IDSOL
-jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
-duplicatas = 0
-maiorSolucao = 0
-custosIguais = 0
-
-# População de Soluções Completas
-popCompl = pp.Populacao(nCompl)
-
 def colideHorario(i1,i2):    #funçao que testa se o horario das viagens colide (condiçao 1)   
     if vdict['hi'][i2]>=vdict['hi'][i1] and vdict['hi'][i2]<vdict['hf'][i1]: return True #início da v2 está dentro da v1, mas v1 continua
     elif vdict['hi'][i1]>=vdict['hi'][i2] and vdict['hi'][i1]<vdict['hf'][i2]: return True #início da v1 está dentro da v2, mas v2 continua
@@ -97,6 +85,25 @@ nRol = 10       #nº soluções que sobrevivem na seleção Roleta final
 nCompl = 1      #nº soluções completas exigidas para que o algoritmo pare
 
 
+
+# Listagens e Iteradores
+alg = 100        #n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
+
+modo_inicio = 0  # 0 = do zero e salvar no binario / 1 = ler do binário e nao salvar
+carregaPais = 0
+
+idsGlob = 0     #contador de serviços global, para o identificador IDS
+
+if modo_inicio==0: idsolGlob = 0   #contador de soluções global, para o identificador IDSOL
+elif modo_inicio==1: idsolGlob = pp.inpop('id')
+
+jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
+duplicatas = 0
+maiorSolucao = 0
+custosIguais = 0
+
+# População de Soluções Completas
+popCompl = pp.Populacao(nCompl)
 
 
 

@@ -14,17 +14,13 @@ import variaveisGlobais as gl
 
 # INICIA O ALGORITMO #############################################################
 
-modo_inicio = 1
-# 0 = do zero / 1 = ler do binário
-
-if modo_inicio == 0:
+if gl.modo_inicio == 0:
     popA = pp.Populacao(gl.na)
     popB = pp.Populacao(gl.nb)
     popC = pp.Populacao(gl.nc)
     
     # CRIA grupo de soluções iniciais A a partir de E - input = leitura de vdict, n populacao A (gl.na)
-    for i in range(gl.na): popA.addSol(sl.Solucao(sv.Servico(rd.randrange(1,len(gl.vdict['hi'])+1))))
-elif modo_inicio == 1:
+elif gl.modo_inicio == 1:
     popA = pp.inpop('a')
     popB = pp.inpop('b')
     popC = pp.Populacao(gl.nc)
@@ -53,6 +49,9 @@ for iAlg in range(gl.alg):
                 popC.addSol(popB.sols[jSol].cruza(popA.sols[iSol].viagSol)) #filho BC
                 
         popC.addSol(popA.sols[iSol]) #só no final os pais advindos de A são adicionados à população, para que também sejam passíveis de mutação na próxima etapa
+        if gl.carregaPais == 1: popC.addSolCheck(popA.sols[iSol])
+        #só no final os pais advindos de A são adicionados à população, para que também sejam passíveis de mutação na próxima etapa
+
     
     ### MUTAÇÃO ############
     # antigo:
@@ -91,9 +90,11 @@ for iAlg in range(gl.alg):
     # plota na tela o número máximo de viagens
     print(iAlg, popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol())
 
-if modo_inicio == 0:
+if gl.modo_inicio == 0:
     pp.outpop(popA, 'a')    
     pp.outpop(popB, 'b')    
     pp.outpop(popC, 'c')    
+    pp.outpop(gl.idsolGlob, 'id')
+    
 #Fim do laço   
 #%%

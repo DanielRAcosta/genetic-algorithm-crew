@@ -106,3 +106,10 @@ venv.bak/
 Programa/alg_output.txt
 Programa/v_input.csv
 Programa/sol1.txt
+*.json
+Programa/output/alg_output.txt
+Programa/output/pop_a.txt
+Programa/output/pop_b.txt
+Programa/output/pop_c.txt
+Programa/output/pop_id.txt
+Programa/output/logfile.txt

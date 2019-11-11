@@ -21,19 +21,16 @@ class Solucao:
         self.viagSol = copy.deepcopy(servx.viags) #copia lista de viagens do serviço para usar na solução
         
     ### BASE ############         
-  
-    def atualizaViagSol(self, idvx):
-        self.viagSol.append(idvx)
-        self.sortV()
-        """claro que é redundante né poc. pra tu colocar a"""
 
     def sortV(self): self.viagSol.sort(key=lambda vx : gl.vdict['hi'][vx])
         
     def checaDuplicatas(self):
-        self.sortV()
+        self.sortV() #só por segurança
         for i in range(len(self.viagSol)-1):
             if self.viagSol[i] == self.viagSol[i+1]:
                 gl.duplicatas = gl.duplicatas + 1
+                
+    
 
     ############## ADIÇÃO ################### 
 
@@ -56,9 +53,16 @@ class Solucao:
                         #print("Colidiu")
                         colide = colide + 1
                 if colide == 0:
+
+                    
+                    self.servs[j].viags.append(vx)
+                    self.servs[j].sortV()
+
+                    self.viagSol.append(vx)
+                    self.sortV()
+
                     adicionou = True
-                    self.servs[j].atualizaViags(vx)
-                    self.atualizaViagSol(vx)
+
                     #print("- VIAGEM ADICIONADA em serviço existente")
                     #print("Serviço n° ", j, " na lista, idserv global = ", self.servs[j].ids,", advinda de mutação")
                     #print("")
@@ -94,6 +98,7 @@ class Solucao:
                 print("%3d  Viagem %3d  =  %2d:%2d-%2d:%2d  -  Term Inic %2d" %(j,self.servs[i].viags[j],gl.vdict['hi'][self.servs[i].viags[j]].hour,gl.vdict['hi'][self.servs[i].viags[j]].minute,gl.vdict['hf'][self.servs[i].viags[j]].hour,gl.vdict['hf'][self.servs[i].viags[j]].minute,gl.vdict['ti'][self.servs[i].viags[j]]))
                 #print(j, "Viagem", self.servs[i].viags[j], " - hi ", gl.vdict['hi'][self.servs[i].viags[j]].hour, "h", gl.vdict['hi'][self.servs[i].viags[j]].minute, "min - hf", gl.vdict['hf'][self.servs[i].viags[j]].hour,"h",  gl.vdict['hf'][self.servs[i].viags[j]].minute, "min - ti", gl.vdict['ti'][self.servs[i].viags[j]])
         print ("")
+        
         
     def geraCopia(self):
         
