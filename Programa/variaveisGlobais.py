@@ -9,6 +9,11 @@ import pandas as pd
 import classPopulacao as pp
 import os
 
+modo_inicio = 1     # 0 = do zero                       1 = ler do binário
+modo_fim = 1        # 0 = até iAlg=alg                  1 = até ter nCompl soluções completas 
+modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
+alg = 2             # n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
+nCompl = 20         #nº soluções completas exigidas para que o algoritmo pare
 
 # Caminhos das Pastas
 user = os.getlogin()
@@ -18,6 +23,12 @@ logf = open(folder + "output\\logfile.txt", 'w')
 wrRoleta = open(folder + "output\\wrRoletaCA.txt", 'w')
 
 ### LEITURA DO ARQUIVO DE INPUT ############
+if modo_inicio==0:
+    idsolGlob = 0   #contador de soluções global, para o identificador IDSOL
+    popCompl = pp.Populacao(nCompl, 'f')
+elif modo_inicio==1:
+    idsolGlob = pp.inpop('id')
+    popCompl = pp.inpop('f')
 
 dfv = pd.read_csv(inputViags, sep=';', index_col=0) 
 for i in range(0,len(dfv)):             # Confusão absurda pra colocar a data na classe datetime de acordo com a tabela sábado ou sexta ou domingo
@@ -86,8 +97,6 @@ carregaPais = 0
 
 idsGlob = 0     #contador de serviços global, para o identificador IDS
 
-if modo_inicio==0: idsolGlob = 0   #contador de soluções global, para o identificador IDSOL
-elif modo_inicio==1: idsolGlob = pp.inpop('id')
 
 jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
 duplicatas = 0

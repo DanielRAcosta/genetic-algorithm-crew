@@ -47,9 +47,9 @@ elif gl.modo_inicio == 1:
     
 gl.logf.write("\nInicia o Laço Principal.")
 
-# INICIA O LAÇO PRINCIPAL #######################################################
+### DEFINE O LAÇO PRINCIPAL (para executar depois) ######
 
-for iAlg in range(gl.alg):
+def principal():
     #popA.gantt(iAlg) #plot gantt image
     popC.sols.clear() #esvazia B para recomeçar
     gl.logf.write("\n######Iteração "+str(iAlg)+"######")
@@ -155,9 +155,26 @@ if gl.modo_inicio == 0:
     #plot gantt image
     #popC.gantt(iAlg)
     #popB.gantt(iAlg)
+       
+    
+#### EXECUTA O LAÇO PRINCIPAL ####
+    
+if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
+    for iAlg in range(1,gl.alg+1):
+        principal()
+elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
+    iAlg = 0  
+    gl.solCompl = 0
+    while gl.solCompl < gl.nCompl:
+        iAlg = iAlg +1
+        principal()
+        
+# guarda as populações num arquivo pickle para usar depois
+if gl.modo_salva == 1:
     pp.outpop(popA, 'a')    
     pp.outpop(popB, 'b')    
     pp.outpop(popC, 'c')    
+    pp.outpop(gl.popCompl, 'f')
     pp.outpop(gl.idsolGlob, 'id')
     
 algEnd = datetime.datetime.now()

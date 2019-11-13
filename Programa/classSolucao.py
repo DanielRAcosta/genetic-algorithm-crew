@@ -13,12 +13,13 @@ import math
 import copy
 
 class Solucao:
-    def __init__(self, servx):  #não tem como criar uma solução sem serviço
+    def __init__(self, servx, idpais):  #não tem como criar uma solução sem serviço
         gl.idsolGlob = gl.idsolGlob + 1 #adiciona ao contador global de soluções
         
         self.idsol = gl.idsolGlob #identifica a solução atual
         self.servs = {0: servx}  #inicializa dicionario de serviços e insere o primeiro
         self.viagSol = copy.deepcopy(servx.viags) #copia lista de viagens do serviço para usar na solução
+        self.idpais = idpais
         
     ### BASE ############         
 
@@ -37,6 +38,7 @@ class Solucao:
         gl.solCompl = gl.solCompl +1
 
     ############## ADIÇÃO ################### 
+        filho = Solucao(serv0filho, [self.idsol, 0])
 
     def addServ(self, servx):   #adiciona um novo serviço a essa solução
         self.servs.update({len(self.servs) : servx}) # guarda o serviço no dicionario servs
@@ -92,6 +94,7 @@ class Solucao:
             return False
 
     ############ CÓPIA ######################
+        filho.idpais[1] = Pai2.idsol
 
     def prsol(self):
         print ("")
@@ -134,7 +137,8 @@ class Solucao:
     
     def cruza(self, viagSolPai2): #cruza duas soluções. gera um filho. entra a solução base e as viagens da solução a adicionar
         filho = self.geraCopia()
-        for vx in viagSolPai2: # percorre cada viagem de nova
+        filho.idpais[1] = Pai2.idsol
+        for vx in Pai2.viagSol: # percorre cada viagem de nova
             if vx not in filho.viagSol: # essa viagem já está na solução filho? NÃO ESTÁ:
                 adicionou = filho.encaixaVSol(vx)
                 if adicionou == False: print("ERRO ESTRANHÍSSIMO AO ENCAIXAR VIAGEM NA SOLUÇÃO")
