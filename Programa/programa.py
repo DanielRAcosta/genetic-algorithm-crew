@@ -1,4 +1,3 @@
-#%%
 """
 Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritmo Genético
 Daniel Rodrigues Acosta
@@ -12,7 +11,17 @@ import classSolucao as sl
 import classPopulacao as pp
 import variaveisGlobais as gl
 
-# INICIA O ALGORITMO #############################################################
+algStart = datetime.datetime.now()
+
+conv = open(gl.folder+ "output\\convergencia.txt", 'w')
+conv.write("\n################## EXECUÇÃO ÀS "+str(algStart)+" #################################")
+conv.write("\n[POPB] iAlg,idSol mais barata,nViagens,nServs,custo,custoG,custoH")
+conv.close()
+gl.sols.write("[POPC] iAlg, sol, idSol, custoG [segundos], custoH [segundos], qtde Servs, qtde Viags, viags ")
+gl.wrRoleta.write("### ROLETA C-A ## - execução às "+str(algStart))
+
+
+### INICIA O ALGORITMO ######
 
 if gl.modo_inicio == 0:
     popA = pp.Populacao(gl.na)
@@ -41,6 +50,7 @@ gl.logf.write("\nInicia o Laço Principal.")
 # INICIA O LAÇO PRINCIPAL #######################################################
 
 for iAlg in range(gl.alg):
+    #popA.gantt(iAlg) #plot gantt image
     popC.sols.clear() #esvazia B para recomeçar
     gl.logf.write("\n######Iteração "+str(iAlg)+"######")
     
@@ -90,6 +100,9 @@ for iAlg in range(gl.alg):
         if gl.carregaPais == 1: popC.addSolCheck(popA.sols[iSol])
         #só no final os pais advindos de A são adicionados à população, para que também sejam passíveis de mutação na próxima etapa
 
+    # EXCLUI deterministicamente/roleta? as piores dos grupos constantes A & B
+    popA.excluiRol()
+    popB.excluiRol()
     
     ### MUTAÇÃO ############
     # antigo:
@@ -111,32 +124,41 @@ for iAlg in range(gl.alg):
     for iSol in melhores: popB.addSol(popC.sols[iSol]) # adiciona à população C as soluções escolhidas acima
     """ será que aqui a declaração está deletando algo? acho que não."""
     
+    gl.wrRoleta = open(gl.folder+"output\\wrRoletaCA.txt",'a')
+    gl.wrRoleta.write("\n"+str(iAlg)+',')
     # roleta C --> A
     idsolsA = [popA.sols[key].idsol for key in popA.sols] # lista de idsols das soluções que existem em A. deve entrar como argumento na função abaixo para evitar duplicatas
     roleta = popC.selecRoleta(gl.nRol,idsolsA) # retorna iterador com as keys das soluções escolhidas em B
     for iSol in roleta: popA.addSol(popC.sols[iSol]) # adiciona à população A as soluções escolhidas acima
+    if erroRoleta: gl.logf.write("\n["+str(iAlg)+"] Roleta recebeu custos iguais na seleção final popC-->popA, portanto a escolha é sem pesos. ")
     
-    # cortar deterministicamente as piores dos grupos constantes A & B
-    popA.excluiDet()
-    popB.excluiDet()
-
-    # plota no arquivo output a cada iteração
     
-    gl.logf.write("\n Fim da iteração. popC:")
-    gl.logf.write("\niAlg, sol, idSol, custoG [segundos], custoH [segundos], qtde Servs, qtde Viags, viags ")
+    #plot custo popB mínimo custo
+    best = popB.selecDet(1,[])[0]
+    conv = open(gl.folder+ "output\\convergencia.txt", 'a')
+    conv.write('\n'+str(iAlg)+','+str(popB.sols[best].idsol)+','+str(len(popB.sols[best].viagSol))+','+str(len(popB.sols[best].servs))+','+str(popB.sols[best].custo().total_seconds())+','+str(popB.sols[best].custog().total_seconds())+','+str(popB.sols[best].custoh().total_seconds()))
+    #ialg - sol min custo - nviag - nserv - custo - custo g - custo h 
+    conv.close()
     
     for sol in popC.sols:
         out = '\n' + str(iAlg) + ',' + str(sol) + ',' + str(popC.sols[sol].idsol) + ',' + str(popC.sols[sol].custog().total_seconds()) + ',' + str(popC.sols[sol].custoh().total_seconds()) + ',' + str(len(popC.sols[sol].servs)) + ',' + str(len(popC.sols[sol].viagSol)) + ',' + str(popC.sols[sol].viagSol)
         gl.logf.write(out)
+    #plot all text
+    #popA.wrpop(iAlg)
+    #popB.wrpop(iAlg)
+    #popC.wrpop(iAlg)
     
     # plota na tela o número máximo de viagens
     print(iAlg, popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol())
 
 if gl.modo_inicio == 0:
+    #plot gantt image
+    #popC.gantt(iAlg)
+    #popB.gantt(iAlg)
     pp.outpop(popA, 'a')    
     pp.outpop(popB, 'b')    
     pp.outpop(popC, 'c')    
     pp.outpop(gl.idsolGlob, 'id')
     
-#Fim do laço   
-#%%
+algEnd = datetime.datetime.now()
+gl.logf.write("Algoritmo executado em "+str(algEnd-algStart))

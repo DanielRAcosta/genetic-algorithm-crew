@@ -31,6 +31,10 @@ class Solucao:
                 gl.duplicatas = gl.duplicatas + 1
                 
     
+    def completou(self):
+        gl.popCompl.addSol(self.geraCopia()) #é adicionada uma cópia aqui, que vai ficar intocada.
+        print("Uma solução completa foi atingida. Cópia armazenada em popCompl.")
+        gl.solCompl = gl.solCompl +1
 
     ############## ADIÇÃO ################### 
 
@@ -119,6 +123,12 @@ class Solucao:
             filho.addServ(servxfilho)
             
         return filho
+    def gantt(self, iAlg, popname):
+        df = []
+        for serv in self.servs: df.extend([dict(Task=str(serv), Start=gl.vdict['hi'][vx], Finish=gl.vdict['hf'][vx]) for vx in self.servs[serv].viags])
+        titulo = "["+str(iAlg)+"] pop"+popname+" - Sol "+str(self.idsol)+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])+" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"
+        fig = ff.create_gantt(df, group_tasks=True, title=titulo)
+        fig.write_image(gl.folder+"output\\img\\"+str(iAlg)+"_pop"+popname+"_"+str(self.idsol)+".png")
           
     ############# GENÉTICOS #################
     

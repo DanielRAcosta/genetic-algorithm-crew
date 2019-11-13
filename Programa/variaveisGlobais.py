@@ -15,6 +15,7 @@ user = os.getlogin()
 folder = "C:\\Users\\"+user+"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
 inputViags = folder + "v_input.csv"
 logf = open(folder + "output\\logfile.txt", 'w')
+wrRoleta = open(folder + "output\\wrRoletaCA.txt", 'w')
 
 ### LEITURA DO ARQUIVO DE INPUT ############
 
