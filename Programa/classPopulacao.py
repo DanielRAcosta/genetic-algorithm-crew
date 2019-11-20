@@ -65,7 +65,7 @@ class Populacao:                    #decidir como lidar com a população - como
             solucoes_sobrando = [sol for sol in self.sols if sol not in roleta]
             for i in solucoes_sobrando: self.sols.pop(i)
         
-    ### GENÉTICOS - seleção ###################
+    ### GENÉTICOS - seleção ######
 
     def Roleta(self, n, nlist):
         custos = [self.sols[sol].custo().total_seconds() for sol in self.sols] # custos das soluções
@@ -76,7 +76,7 @@ class Populacao:                    #decidir como lidar com a população - como
         #gl.wrRoleta.write(str(custos)+',')
         maxc = max(custos)
         #gl.wrRoleta.write(str(maxc)+',')
-        custos = [c + maxc*gl.probabMaiorCusto for c in custos] # adiciona um piso de probabilidade para o com maior custo não ser zero
+        custos = [c + maxc*gl.probMaiorCusto for c in custos] # adiciona um piso de probabilidade para o com maior custo não ser zero
         #gl.wrRoleta.write(str(custos)+',')
         somac = sum(custos) 
         #gl.wrRoleta.write(str(somac)+',')
@@ -116,7 +116,7 @@ class Populacao:                    #decidir como lidar com a população - como
         #gl.wrRoleta.write(str(nlist)+',')
         return self.Roleta(n, nlist)
 
-    ### PRINTS ##################################
+    ### PRINTS ######
     
     def prpop(self): # print útil
         print("")

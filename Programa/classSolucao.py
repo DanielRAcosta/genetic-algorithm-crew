@@ -4,12 +4,12 @@ Daniel Rodrigues Acosta
 Universidade Federal do Rio Grande do Sul
 Junho/2019
 """
-
 import datetime as dtm
 import classServico as sv
 import variaveisGlobais as gl
 import random as rd
-import math
+import numpy as np
+import plotly.figure_factory as ff
 import copy
 
 class Solucao:
@@ -21,24 +21,37 @@ class Solucao:
         self.viagSol = copy.deepcopy(servx.viags) #copia lista de viagens do serviço para usar na solução
         self.idpais = idpais
         
-    ### BASE ############         
+    ### BASE ######
 
-    def sortV(self): self.viagSol.sort(key=lambda vx : gl.vdict['hi'][vx])
-        
-    def checaDuplicatas(self):
-        self.sortV() #só por segurança
-        for i in range(len(self.viagSol)-1):
-            if self.viagSol[i] == self.viagSol[i+1]:
-                gl.duplicatas = gl.duplicatas + 1
-                
-    
+    def sortV(self): self.viagSol.sort(key=lambda vx : gl.vdict['hi'][vx])    
+
     def completou(self):
-        gl.popCompl.addSol(self.geraCopia()) #é adicionada uma cópia aqui, que vai ficar intocada.
+        gl.popCompl.addSolCheck(self.geraCopia()) #é adicionada uma cópia aqui, que vai ficar intocada.
         print("Uma solução completa foi atingida. Cópia armazenada em popCompl.")
         gl.solCompl = gl.solCompl +1
 
-    ############## ADIÇÃO ################### 
+    def geraCopia(self):
+        serv0filho = sv.Servico(0)
+        idZero = list(self.servs.keys())[0]
+        
+        serv0filho.almF = copy.deepcopy(self.servs[idZero].almF)
+        serv0filho.almI = copy.deepcopy(self.servs[idZero].almI)
+        serv0filho.viags = copy.deepcopy(self.servs[idZero].viags)
+        serv0filho.sortV()
+        
         filho = Solucao(serv0filho, [self.idsol, 0])
+                
+        for jserv in list(self.servs.keys())[1:]:
+            servxfilho = sv.Servico(0)
+            servxfilho.almF = copy.deepcopy(self.servs[jserv].almF)
+            servxfilho.almI = copy.deepcopy(self.servs[jserv].almI)
+            servxfilho.viags = copy.deepcopy(self.servs[jserv].viags)
+            servxfilho.sortV()
+            filho.addServ(servxfilho)
+            
+        return filho
+        
+    ### ADIÇÃO ######
 
     def addServ(self, servx):   #adiciona um novo serviço a essa solução
         self.servs.update({len(self.servs) : servx}) # guarda o serviço no dicionario servs
@@ -46,42 +59,34 @@ class Solucao:
         self.sortV() #coloca as viagens em ordem ascendente
     
     def encaixaVSol(self,vx):
-        gl.logf.write("\n\n[encaixaVSol] Viagem "+str(vx)+ " | hi = "+str( gl.vdict['hi'][vx])+" | hf = "+str( gl.vdict['hf'][vx])+" | ti = "+str( gl.vdict['ti'][vx])+" | tf = "+str( gl.vdict['tf'][vx]))
         adicionou = False
         j = 0 #para percorrer cada serviço da solução
         while adicionou == False and j<len(self.servs): # percorre cada serviço da solução até chegar ao fim da lista de serviços
-            #só encerra quando conseguir adicionar viagem (adicionou = 1)
-            #gl.logf.write("\n[encaixaVSol] Testa se a Viagem "+str(vx)+ " cabe no serviço "+str(j)+" pelas funções cabeJornada e encaixaTerminal")
-            if self.servs[j].cabeJornada(vx) and self.servs[j].encaixaTerminal(vx): # cabe na jornada? CABE
-                """adicionar aqui as condições de Terminal e de Almoço"""
-                colide = 0 # percorrer todas as viagens do serviço atual da solução e ver se não colide
-                #print("Colide ", colide)
-                #gl.logf.write("\n[encaixaVSol] Testa se a Viagem "+str(vx)+ " cabe no serviço "+str( j)+" pela verificação de colisão com as viagens")
-                for vserv in self.servs[j].viags:
-                    if gl.colideHorario(vx,vserv) == True:
-                        #gl.logf.write("\n[encaixaVSol] A viagem "+ str(vx) + " colidiu com a viagem " +str(vserv)+ " no serviço "+str(j))
-                        colide = colide + 1
-                if colide == 0:
-
-                    gl.logf.write("\n[encaixaVSol] A Viagem "+str(vx)+ " não colidiu com nenhuma viagem e atendeu aos outros três requisitos, portanto será adicionada no serviço "+str( j))
-                    
-                    self.servs[j].viags.append(vx)
-                    self.servs[j].sortV()
-
-                    self.viagSol.append(vx)
-                    self.sortV()
-
-                    adicionou = True
-
-                    #print("- VIAGEM ADICIONADA em serviço existente")
-                    #print("Serviço n° ", j, " na lista, idserv global = ", self.servs[j].ids,", advinda de mutação")
-                    #print("")
+            if self.servs[j].cabeJornada(vx): #não extrapola a soma de tempos 
+                if self.servs[j].encaixaTerminal(vx): #terminais compativeis de bairro e centro
+                    if self.servs[j].encaixaHorario(vx): #nao colide com nenhuma viagem                        
+                        if self.servs[j].almI == None:
+                            if len(self.servs)>gl.viagsPorServ/2 and rd.random()<gl.probAlm: #se ja chegou no momento de atribuir 
+                                self.servs[j].atribuiAlmoco() 
+                        
+                        if self.servs[j].almI == None:
+                            self.servs[j].viags.append(vx)
+                            self.servs[j].sortV()
+                            self.viagSol.append(vx)
+                            self.sortV()
+                            adicionou = True
+                            
+                        elif not self.servs[j].colideAlmoco(vx):
+                            self.servs[j].viags.append(vx)
+                            self.servs[j].sortV()
+                            self.viagSol.append(vx)
+                            self.sortV()
+                            adicionou = True
             j = j + 1
-            #print("Fim do while -> j + 1 = ", j)
-            if j == len(self.servs) and adicionou == False: #se chegou ao final da lista de serviços sem ter adicionado
-                adicionou = True
-                gl.logf.write("\n[encaixaVSol] A Viagem "+str(vx)+ " não coube em nenhum serviço portanto será criado um novo serviço")
-                self.addServ(sv.Servico(vx))
+            
+        if j == len(self.servs) and adicionou == False: #se chegou ao final da lista de serviços sem ter adicionado
+            adicionou = True
+            self.addServ(sv.Servico(vx))
         return adicionou
 
     def viagNovaRandom(self): # função que retorna uma viagem aleatória do vdict, mas apenas se ela já não existir na solução.
@@ -89,12 +94,43 @@ class Solucao:
             notInSol = [vx for vx in gl.vdict['hi'] if vx not in self.viagSol]
             return notInSol[rd.randrange(len(notInSol))]
         else: 
-            gl.popCompl.addSol(self.geraCopia()) #é adicionada uma cópia aqui, que vai ficar intocada.
-            print("Uma solução completa foi atingida. Cópia armazenada em popCompl.")
+            self.completou()
             return False
 
     ############ CÓPIA ######################
         filho.idpais[1] = Pai2.idsol
+        
+    #### CUSTOS ######
+
+    def folgaI(self):
+        folgaI = dtm.timedelta(0)
+        for servx in self.servs: folgaI = folgaI + self.servs[servx].folgaI()
+        return folgaI
+    
+    def folgaE(self):
+        folgaE = dtm.timedelta(0)
+        for servx in self.servs: folgaE = folgaE + self.servs[servx].folgaE()
+        return folgaE
+    
+    def jorns(self):
+        jorns = dtm.timedelta(0) 
+        for servx in self.servs: jorns = jorns + self.servs[servx].jorn 
+        return jorns
+    
+#    def horaPico(self):
+        
+
+    def custog(self): return gl.tau*self.folgaI() + self.folgaE() + gl.alfa*self.jorns() #custo g - custo da solução atual/existente """custo dos horarios de pico - FAZER DEPOIS"""
+    
+    def servFalta(self): return (len(gl.vdict['hi']) - len(self.viagSol)) / gl.viagsPorServ
+    
+    def custoh(self): return self.servFalta() * gl.hmus + self.servFalta() * gl.alfa * gl.jornGlob #custo h - penalidade relativa a "quanto falta para atingir uma suposta solução ótima"
+        
+    def custo(self): return self.custog() + self.custoh()*gl.gama           #determina o custo da solução atual de acordo com a tese de Elizondo
+    
+    def custotry(self): return [self.idsol, (gl.tau*self.folgaI() + self.folgaE() + gl.alfa*self.jorns()) + (self.servFalta() * gl.hmus + self.servFalta() * gl.alfa * gl.jornGlob) , self.folgaI(), self.folgaE(), self.jorns(), self.servFalta(), self.servFalta()*gl.hmus, self.servFalta() * gl.alfa * gl.jornGlob ]
+
+    ### PRINTS ######
 
     def prsol(self):
         print ("")
@@ -111,21 +147,6 @@ class Solucao:
                 #print(j, "Viagem", self.servs[i].viags[j], " - hi ", gl.vdict['hi'][self.servs[i].viags[j]].hour, "h", gl.vdict['hi'][self.servs[i].viags[j]].minute, "min - hf", gl.vdict['hf'][self.servs[i].viags[j]].hour,"h",  gl.vdict['hf'][self.servs[i].viags[j]].minute, "min - ti", gl.vdict['ti'][self.servs[i].viags[j]])
         print ("")
         
-        
-    def geraCopia(self):
-        
-        serv0filho = sv.Servico(0)
-        serv0filho.viags = copy.deepcopy(self.servs[0].viags)
-        serv0filho.sortV()
-        filho = Solucao(serv0filho)
-                
-        for jserv in range(1,len(self.servs)):
-            servxfilho = sv.Servico(0)
-            servxfilho.viags = copy.deepcopy(self.servs[jserv].viags)
-            servxfilho.sortV()
-            filho.addServ(servxfilho)
-            
-        return filho
     def gantt(self, iAlg, popname):
         df = []
         for serv in self.servs: df.extend([dict(Task=str(serv), Start=gl.vdict['hi'][vx], Finish=gl.vdict['hf'][vx]) for vx in self.servs[serv].viags])
@@ -136,6 +157,24 @@ class Solucao:
     ############# GENÉTICOS #################
     
     def cruza(self, viagSolPai2): #cruza duas soluções. gera um filho. entra a solução base e as viagens da solução a adicionar
+    ### ANTIGAS ######
+""" 
+plots encaixa vsol   
+#gl.logf.write("\n\n[encaixaVSol] Viagem "+str(vx)+ " | hi = "+str( gl.vdict['hi'][vx])+" | hf = "+str( gl.vdict['hf'][vx])+" | ti = "+str( gl.vdict['ti'][vx])+" | tf = "+str( gl.vdict['tf'][vx]))
+        #só encerra quando conseguir adicionar viagem (adicionou = 1)
+            #gl.logf.write("\n[encaixaVSol] Testa se a Viagem "+str(vx)+ " cabe no serviço "+str(j)+" pelas funções cabeJornada e encaixaTerminal")
+            #gl.logf.write("\n[encaixaVSol] Testa se a Viagem "+str(vx)+ " cabe no serviço "+str( j)+" pela verificação de colisão com as viagens")
+                #gl.logf.write("\n[encaixaVSol] A viagem "+ str(vx) + " colidiu com a viagem " +str(vserv)+ " no serviço "+str(j))
+#gl.logf.write("\n[encaixaVSol] A Viagem "+str(vx)+ " não colidiu com nenhuma viagem e atendeu aos outros três requisitos, portanto será adicionada no serviço "+str( j))
+                #gl.logf.write("\n[encaixaVSol] A Viagem "+str(vx)+ " não coube em nenhum serviço portanto será criado um novo serviço")
+                
+    def checaDuplicatas(self):
+        self.sortV() #só por segurança
+        for i in range(len(self.viagSol)-1):
+            if self.viagSol[i] == self.viagSol[i+1]:
+                gl.duplicatas = gl.duplicatas + 1
+
+    def cruza_old(self, Pai2): #cruza duas soluções. gera um filho. entra a solução base e as viagens da solução a adicionar
         filho = self.geraCopia()
         filho.idpais[1] = Pai2.idsol
         for vx in Pai2.viagSol: # percorre cada viagem de nova
@@ -144,32 +183,11 @@ class Solucao:
                 if adicionou == False: print("ERRO ESTRANHÍSSIMO AO ENCAIXAR VIAGEM NA SOLUÇÃO")
         return filho
     
-    def muta(self):            #realiza mutação na solução atual. a aleatoriedade está fora dessa função, no bloco do código.
+    def muta_old(self):           #realiza mutação na solução atual mas o filho é outro. a aleatoriedade está fora dessa função, no bloco do código.
         filho = self.geraCopia()
         vx = filho.viagNovaRandom()
-        # a diferença para o cruzamento é que aqui ele vai forçar que entre alguma viagem nova.
-        # no cruzamento ele só tenta a que vem de Pai2. se já tem, só PASS.
         adicionou = filho.encaixaVSol(vx)
         if adicionou == False: print("ERRO ESTRANHÍSSIMO AO ENCAIXAR VIAGEM NA SOLUÇÃO")
         return filho
-
-    def custog(self): #custo g - custo da solução atual/existente
-        fin = dtm.timedelta(0) # folga interna
-        fex = dtm.timedelta(0) # folga externa
-        jorns = dtm.timedelta(0) 
-        for servx in self.servs: # custo das folgas & custo dos n serviços
-            fin = fin + self.servs[servx].hf() - self.servs[servx].hi() - self.servs[servx].condEf()
-            fex = fex + self.servs[servx].jorn + self.servs[servx].hi() - self.servs[servx].hf()
-            jorns = jorns + self.servs[servx].jorn             
-        """custo dos horarios de pico - FAZER DEPOIS"""
-        return gl.tau*fin + fex + gl.alfa*jorns
     
-    def custoh(self): #custo h - penalidade relativa a "quanto falta para atingir uma suposta solução ótima"
-        #serviços faltantes = sf = arredonda para numero inteiro
-        sf = math.ceil((len(gl.vdict['hi']) - len(self.viagSol)) / gl.viagsPorServ)
-        # HR = Folga Restante = sf * hmus
-        # Serviços restantes = sf * alfa
-        # precisei multiplicar pela jornada pra poder fazer a adição
-        return sf * gl.hmus + sf * gl.alfa * gl.jornGlob
-        
-    def custo(self): return self.custog() + self.custoh()*gl.gama           #determina o custo da solução atual de acordo com a tese de Elizondo
+"""

@@ -4,30 +4,64 @@ Daniel Rodrigues Acosta
 Universidade Federal do Rio Grande do Sul
 Junho/2019
 """
-
 import datetime as dtm
+#import math
 import variaveisGlobais as gl
 
 class Servico:
     def __init__(self, idvx):     #não tem como criar serviço sem viagem
-    # só precisa, então, de uma viagem inicial (apenas seu INDEX)
-        gl.idsGlob = gl.idsGlob +1    #adiciona ao contador global de serviços
-        
-        self.ids = gl.idsGlob      #identifica esse serviço
         self.jorn = gl.jornGlob    #por enquanto, utiliza a jornada globalmente definida de 7h30min.
-        self.viags = [idvx]     #aqui não precisa ser guardada a viagem, só precisa guardar o index
+        self.viags = [idvx]        #aqui não precisa ser guardada a viagem, só precisa guardar o index
+        self.almI = None
+        self.almF = None
 
-    ############### BASE ####################               
+    ### BASE ######
+    
     def sortV(self): self.viags.sort(key=lambda vx : gl.vdict['hi'][vx])
 
-    ############# DURAÇÕES ##################    
+    ### DURAÇÕES ######    
+
     def hi(self):              #primeiro horario da primeira viagem alocada + tempo extra
         hList = [gl.vdict['hi'][vx] for vx in self.viags] #cria uma lista com todas as horas iniciais das viagens    
+        if self.almI is not None: hList.append(self.almI)
         return min(hList)
     
     def hf(self):      #ultimo horario da ultima viagem alocada + tempo extra (quando add tempo extra cuidar aqui e na cabeJornada)
         hList = [gl.vdict['hf'][vx] for vx in self.viags]
+        if self.almF is not None: hList.append(self.almF)
         return max(hList)
+    
+    def folgaI(self):
+        if self.almI == None:
+            return self.jornV()-self.condEf()
+        else:
+            return self.almI+self.jornV()-self.condEf()-self.almF
+    
+    def atribuiAlmoco(self): # almoço é testado aproximadamente no meio do serviço
+        adicionou = False
+        i=1
+        while adicionou == False and i<len(self.viags): #se ja chegou mais ou menos no meio
+            if gl.vdict['hf'][self.viags[i-1]]+gl.almGlob < gl.vdict['hi'][self.viags[i]]: #se não colide, coloca entre viagens
+                self.almI = gl.vdict['hf'][self.viags[i-1]]
+                self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
+                adicionou = True
+            i=i+1
+            
+        if adicionou == False and i == len(self.viags):
+            if self.hf()<gl.meioTab:
+                self.almI = gl.vdict['hf'][self.viags[i-1]]
+                self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
+                adicionou = True
+            else:
+                self.almF = gl.vdict['hi'][self.viags[0]]
+                self.almI = gl.vdict['hi'][self.viags[0]] - gl.almGlob
+                adicionou = True
+            if adicionou == False: print("Problema ao atribuir almoço.")
+                
+               
+        # almoço, horario inicial e final dele, não precisam estar lá na inicialzação do serviço
+    
+    def folgaE(self): return self.jorn - self.jornV()
 
     def condEf(self):          #calcula a condução efetiva - suponho que seja a soma de todas as durações de viagens
         durTotal = dtm.timedelta(0)
@@ -35,11 +69,9 @@ class Servico:
         return durTotal
 
     def jornV(self): return self.hf()-self.hi()
-        # uma função que verifique se:
-        # 1. a jornada já está completa, então não cabe mais nenhuma viagem
-        # 2. no momento de inserção da viagem...
 
-    ############ VERIFICAÇÕES ##############
+    ### VERIFICAÇÕES ######
+
     def cabeJornada(self,idvx): #checa se para realizar a viagem desejada, a jornada máxima não seria estourada
         # quando colocar os tempos extras do trabalhador chegar no deposito (fim e inicio de jornada), cuidar aqui também.
         if gl.vdict['hi'][idvx]>self.hf(): #caso 1 - viagem nova no final do serviço
@@ -95,7 +127,43 @@ class Servico:
         #gl.logf.write("\n[encaixaTerm] Encaixa Final "+ str( encaixa_ant and encaixa_post))
         return encaixa_ant and encaixa_post   
     
-    #def testAlm:               
-        # almoço, horario inicial e final dele, não precisam estar lá na inicialzação do serviço
+    def colideAlmoco(self, vx):
+        if self.almI>=gl.vdict['hi'][vx] and self.almI<gl.vdict['hf'][vx]:
+            #logf.write("\n[Colidealmoço] Caso 1 - inicio da almoço está dentro da v1, mas v1 continua")
+            return True #início da almoço está dentro da v1, mas v1 continua
         
-    #def testJorn:
+        elif gl.vdict['hi'][vx]>=self.almI and gl.vdict['hi'][vx]<self.almF:
+            #logf.write("\n[Colidealmoço] Caso 2 - inicio da v1 está dentro da almoço, mas almoço continua")
+            return True #início da v1 está dentro da almoço, mas almoço continua
+        
+        elif gl.vdict['hi'][vx] == self.almI or gl.vdict['hf'][vx] == self.almF: #ambas coincidem em pelo menos um horário
+            #logf.write("\n[Colidealmoço] Caso 3 - coincidem")
+            #print(i, "| Viagens comparadas têm mesmo hi ou hf.")
+            #if gl.vdict['ti'][vx] == gl.vdict['ti'][i2] or gl.vdict['tf'][vx] == gl.vdict['tf'][i2]: #as viagens são idênticas!!!
+                #print(i, "| Viagens comparadas têm mesmo ti ou tf")
+            return True 
+        else: return False #viagens não colidem 
+        
+    def encaixaHorario(self, i1):
+        colide = False
+        for i2 in self.viags:
+                #if gl.colideHorario(vx,vserv) == True: colide = colide + 1
+            if gl.vdict['hi'][i2]>=gl.vdict['hi'][i1] and gl.vdict['hi'][i2]<gl.vdict['hf'][i1]:
+                #logf.write("\n[ColideHorario] Caso 1 - inicio da v2 está dentro da v1, mas v1 continua")
+                colide = True #início da v2 está dentro da v1, mas v1 continua
+            
+            elif gl.vdict['hi'][i1]>=gl.vdict['hi'][i2] and gl.vdict['hi'][i1]<gl.vdict['hf'][i2]:
+                #logf.write("\n[ColideHorario] Caso 2 - inicio da v1 está dentro da v2, mas v2 continua")
+                colide = True #início da v1 está dentro da v2, mas v2 continua
+            
+            elif gl.vdict['hi'][i1] == gl.vdict['hi'][i2] or gl.vdict['hf'][i1] == gl.vdict['hf'][i2]: #ambas coincidem em pelo menos um horário
+                #logf.write("\n[ColideHorario] Caso 3 - coincidem")
+                #print(i, "| Viagens comparadas têm mesmo hi ou hf.")
+                #if vdict['ti'][i1] == vdict['ti'][i2] or vdict['tf'][i1] == vdict['tf'][i2]: #as viagens são idênticas!!!
+                    #print(i, "| Viagens comparadas têm mesmo ti ou tf")
+                colide = True 
+        return not colide
+
+    
+
+        
