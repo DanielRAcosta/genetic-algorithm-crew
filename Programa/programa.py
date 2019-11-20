@@ -24,9 +24,9 @@ gl.wrRoleta.write("### ROLETA C-A ## - execução às "+str(algStart))
 ### INICIA O ALGORITMO ######
 
 if gl.modo_inicio == 0:
-    popA = pp.Populacao(gl.na)
-    popB = pp.Populacao(gl.nb)
-    popC = pp.Populacao(gl.nc)
+    popA = pp.Populacao(gl.na, 'A')
+    popB = pp.Populacao(gl.nb, 'B')
+    popC = pp.Populacao(gl.nc, 'C')
     
     # CRIA grupo de soluções iniciais A a partir de E - input = leitura de vdict, n populacao A (gl.na)
     randlist = []
@@ -40,14 +40,24 @@ if gl.modo_inicio == 0:
     gl.logf.write("\npopA aleatória inicial criada com as viagens "+str(randlist))
         
 elif gl.modo_inicio == 1:
-    popA = pp.inpop('a')
-    popB = pp.inpop('b')
-    popC = pp.Populacao(gl.nc)
+    popA = pp.inpop('A')
+    popB = pp.inpop('B')
+    popC = pp.Populacao(gl.nc, 'C')
     gl.logf.write("\npopA e popB obtidas do pickle.")
     
 gl.logf.write("\nInicia o Laço Principal.")
 
 ### DEFINE O LAÇO PRINCIPAL (para executar depois) ######
+def guardaExecucao():
+    global popA
+    global popB
+    global popC
+
+    pp.outpop(popA, 'a')    
+    pp.outpop(popB, 'b')    
+    pp.outpop(popC, 'c')    
+    #pp.outpop(gl.popCompl, 'f')
+    pp.outpop(gl.idsolGlob, 'id')
 
 def principal():
     #popA.gantt(iAlg) #plot gantt image
@@ -103,18 +113,13 @@ def principal():
     # EXCLUI deterministicamente/roleta? as piores dos grupos constantes A & B
     popA.excluiRol()
     popB.excluiRol()
+    gl.popCompl.excluiRol()
     
-    ### MUTAÇÃO ############
-    # antigo:
-    #mutarSolucoes = popC.selecRand(gl.nMut, []) #quais soluções de B serão mutadas? deve ser declarado aqui para que o laço abaixo não gere soluções duplamente mutadas
-    #for iSol in mutarSolucoes: popC.addSol(popC.sols[iSol].muta()) # adiciona à popB os filhos dos pais escolhidos acima 
-    
-    # novo: mutação substitui
-    for iSol in popC.sols:
-        if rd.random() < gl.pm: popC.sols[iSol].muta()
-    
-    # só para checar:
-    idsolsC = [popC.sols[key].idsol for key in popC.sols]
+    ### MUTAÇÃO ############    
+    for iSol in popC.sols: # novo: mutação substitui
+        if rd.random() < gl.pm:
+            popC.sols[iSol].muta()
+            print("muta ",iSol)
     
     ### SELEÇÃO ############
     
@@ -140,18 +145,11 @@ def principal():
     #ialg - sol min custo - nviag - nserv - custo - custo g - custo h 
     conv.close()
     
-    for sol in popC.sols:
-        out = '\n' + str(iAlg) + ',' + str(sol) + ',' + str(popC.sols[sol].idsol) + ',' + str(popC.sols[sol].custog().total_seconds()) + ',' + str(popC.sols[sol].custoh().total_seconds()) + ',' + str(len(popC.sols[sol].servs)) + ',' + str(len(popC.sols[sol].viagSol)) + ',' + str(popC.sols[sol].viagSol)
-        gl.logf.write(out)
     #plot all text
     #popA.wrpop(iAlg)
     #popB.wrpop(iAlg)
     #popC.wrpop(iAlg)
     
-    # plota na tela o número máximo de viagens
-    print(iAlg, popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol())
-
-if gl.modo_inicio == 0:
     #plot gantt image
     #popC.gantt(iAlg)
     #popB.gantt(iAlg)
@@ -162,20 +160,18 @@ if gl.modo_inicio == 0:
 if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
     for iAlg in range(1,gl.alg+1):
         principal()
+        if float(iAlg/30).is_integer() and gl.modo_salva == 1: guardaExecucao()
+        
 elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
     iAlg = 0  
     gl.solCompl = 0
     while gl.solCompl < gl.nCompl:
         iAlg = iAlg +1
         principal()
+        if float(iAlg/30).is_integer() and gl.modo_salva == 1: guardaExecucao()
         
 # guarda as populações num arquivo pickle para usar depois
-if gl.modo_salva == 1:
-    pp.outpop(popA, 'a')    
-    pp.outpop(popB, 'b')    
-    pp.outpop(popC, 'c')    
-    pp.outpop(gl.popCompl, 'f')
-    pp.outpop(gl.idsolGlob, 'id')
+if gl.modo_salva == 1: guardaExecucao()
     
 algEnd = datetime.datetime.now()
 gl.logf.write("Algoritmo executado em "+str(algEnd-algStart))

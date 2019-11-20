@@ -13,16 +13,18 @@ import datetime as dtm
 import pickle as pk
 #import os
 
-def outpop(pop, nome):
-    nomefile = gl.folder+'output\\pop_'+nome+'.txt'
-    #os.remove(nomefile)
-    pkfile = open(nomefile, mode='bw')
-    pk.dump(pop,pkfile)
+def inpop(nome):
+    pkfile = open(gl.folder+'output\\'+gl.inputPopFolder+'\\pop_'+nome+'.txt', mode='br')
+    return pk.load(pkfile)
     pkfile.close()
     
-def inpop(nome):
-    pkfile = open(gl.folder+'output\\pop_'+nome+'.txt', mode='br')
-    return pk.load(pkfile)
+def outpop(pop, nome):
+    pasta = gl.folder+'output\\'+gl.outputPopFolder
+    if not os.path.exists(pasta): os.mkdir(pasta)
+    nomefile = pasta+'\\pop_'+nome+'.txt'
+    if os.path.exists(nomefile): os.remove(nomefile)
+    pkfile = open(nomefile, mode='bw')
+    pk.dump(pop,pkfile)
     pkfile.close()
 
 class Populacao:                    #decidir como lidar com a população - como lidar com o tamanho fixo?
@@ -31,8 +33,7 @@ class Populacao:                    #decidir como lidar com a população - como
         self.npop = npop            #populaçao maxima escolhida
         self.nome = nome
     
-
-    ### ADIÇÃO ################
+    ### ADIÇÃO ######
 
     def addSol(self, solx): self.sols.update({solx.idsol : solx}) #adiciona uma solução a essa população0\
 
