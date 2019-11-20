@@ -10,6 +10,8 @@ import classServico as sv
 import classSolucao as sl
 import classPopulacao as pp
 import variaveisGlobais as gl
+import math
+import datetime
 
 algStart = datetime.datetime.now()
 
@@ -35,7 +37,7 @@ if gl.modo_inicio == 0:
         while vx in randlist: vx = rd.randrange(1,len(gl.vdict['hi'])+1)
         randlist.append(vx)
         
-    for vx in randlist: popA.addSol(sl.Solucao(sv.Servico(vx)))
+    for vx in randlist: popA.addSol(sl.Solucao(sv.Servico(vx), [0,0]))
     
     gl.logf.write("\npopA aleatória inicial criada com as viagens "+str(randlist))
         
@@ -62,50 +64,59 @@ def guardaExecucao():
 def principal():
     #popA.gantt(iAlg) #plot gantt image
     popC.sols.clear() #esvazia B para recomeçar
-    gl.logf.write("\n######Iteração "+str(iAlg)+"######")
+    gl.logf.write("\n### Iteração "+str(iAlg)+"######")
     
     ### CRUZAMENTO ############
     # pra cada um dos nb melhores integrantes de A, de acordo com a função seleçãoDeterminística 
-    for iSol in popA.selecDet(round(gl.fs*gl.na),[]):  # CRUZAMENTO B->C - repetir até gerar nCruz filhos cruzados dos pais de A
-        gl.logf.write("\nCruzamento - Pai1 id "+str(iSol)+" com viagens "+str(popA.sols[iSol].viagSol))
+    pais1 = popA.selecDet(round(gl.fs*gl.na),[])
+    for iSol in pais1:  # CRUZAMENTO B->C - repetir até gerar nCruz filhos cruzados dos pais de A
+        #gl.logf.write("\nCruzamento - Pai1 id "+str(iSol)+" com viagens "+str(popA.sols[iSol].viagSol))
         # os pais dos cruzamentos aqui são buscados diretamente em A.
+        
         for jSol in range(gl.nCruz): # cruza com E (vdict)
-            ex = sl.Solucao(sv.Servico(popA.sols[iSol].viagNovaRandom())) # cria solução com viagem que ainda não existe em B
-            gl.logf.write("\n[popC "+str(len(popC.sols))+" Cruzamento com E - Pai2 id "+str(ex.idsol)+" com viagens "+str(ex.viagSol))
+            vx = popA.sols[iSol].viagNovaRandom()
+            if vx is not False: 
+                ex = sl.Solucao(sv.Servico(vx), [0,0]) # cria solução com viagem que ainda não existe em B
+                #gl.logf.write("\n[popC "+str(len(popC.sols))+" Cruzamento com E - Pai2 id "+str(ex.idsol)+" com viagens "+str(ex.viagSol))
+                
+                #filho CE
+                filho, alterou = popA.sols[iSol].cruza(ex) 
+                #gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CE id "+str(filho.idsol)+" com viagens "+str(filho.viagSol))
+                if alterou: popC.addSol(filho)
+            #gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CE adicionado a popC.")
             
+            #filho EC
+                filho2, alterou = ex.cruza(popA.sols[iSol])
+            #gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho EC id "+str(filho2.idsol)+" com viagens "+str(filho2.viagSol))
+                if alterou: popC.addSolCheck(filho2)
             
-            filho = popA.sols[iSol].cruza(ex.viagSol) 
-            gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CE id "+str(filho.idsol)+" com viagens "+str(filho.viagSol))
-            popC.addSol(filho) #filho CE
-            gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CE adicionado a popC.")
+        for jSol in popA.selecRoleta(gl.nCruz,pais1)[0]: #cruza com A
+            #gl.logf.write("\n[popC "+str(len(popC.sols))+" Cruzamento com A - Pai2 id "+str(jSol)+" com viagens "+str(popA.sols[jSol].viagSol))
             
-            filho2 = ex.cruza(popA.sols[iSol].viagSol)
-            gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho EC id "+str(filho2.idsol)+" com viagens "+str(filho2.viagSol))
-            popC.addSolCheck(filho2)
+            #filho CA
+            filho, alterou = popA.sols[iSol].cruza(popA.sols[jSol])
+            #gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CA id "+str(filho.idsol)+" com viagens "+str(filho.viagSol))
+            if alterou: popC.addSolCheck(filho)                
             
-        for jSol in popA.selecRoleta(gl.nCruz,pais1): #cruza com A
-            gl.logf.write("\n[popC "+str(len(popC.sols))+" Cruzamento com A - Pai2 id "+str(jSol)+" com viagens "+str(popA.sols[jSol].viagSol))
-            
-            filho = popA.sols[iSol].cruza(popA.sols[jSol].viagSol)
-            gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CA id "+str(filho.idsol)+" com viagens "+str(filho.viagSol))
-            popC.addSolCheck(filho)                
-            
-            filho2 = popA.sols[jSol].cruza(popA.sols[iSol].viagSol)
-            gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho AC id "+str(filho2.idsol)+" com viagens "+str(filho2.viagSol))
-            popC.addSolCheck(filho2)
+            #filho AC
+            filho2, alterou = popA.sols[jSol].cruza(popA.sols[iSol])
+            #gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho AC id "+str(filho2.idsol)+" com viagens "+str(filho2.viagSol))
+            if alterou: popC.addSolCheck(filho2)
         
         
-        if iAlg>0: #cruza com B
-            for jSol in popB.selecRoleta(gl.nCruz,[]): 
-                gl.logf.write("\n[popC "+str(len(popC.sols))+" Cruzamento com B - Pai2 id "+str(jSol)+" com viagens "+str(popB.sols[jSol].viagSol))
+        if iAlg+gl.modo_inicio>1: #cruza com B
+            for jSol in popB.selecRoleta(gl.nCruz,[])[0]: 
+                #gl.logf.write("\n[popC "+str(len(popC.sols))+" Cruzamento com B - Pai2 id "+str(jSol)+" com viagens "+str(popB.sols[jSol].viagSol))
                 
-                filho = popA.sols[iSol].cruza(popB.sols[jSol].viagSol)
-                gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CB id "+str(filho.idsol)+" com viagens "+str(filho.viagSol))
-                popC.addSolCheck(filho) #filho CB
+                #filho CB
+                filho, alterou = popA.sols[iSol].cruza(popB.sols[jSol])
+                #gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho CB id "+str(filho.idsol)+" com viagens "+str(filho.viagSol))
+                if alterou: popC.addSolCheck(filho)
                 
-                filho2 = popB.sols[jSol].cruza(popA.sols[iSol].viagSol)
-                gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho BC id "+str(filho2.idsol)+" com viagens "+str(filho2.viagSol))
-                popC.addSolCheck(filho2)
+                #filho BC
+                filho2, alterou = popB.sols[jSol].cruza(popA.sols[iSol])
+                #gl.logf.write("\n[popC "+str(len(popC.sols))+"] Filho BC id "+str(filho2.idsol)+" com viagens "+str(filho2.viagSol))
+                if alterou: popC.addSolCheck(filho2)
             
         if gl.carregaPais == 1: popC.addSolCheck(popA.sols[iSol])
         #só no final os pais advindos de A são adicionados à população, para que também sejam passíveis de mutação na próxima etapa
@@ -124,19 +135,22 @@ def principal():
     ### SELEÇÃO ############
     
     # deterministica C --> B
-    idsolsB = [popB.sols[key].idsol for key in popB.sols] # lista de idsols das soluções que existem em C. deve entrar como argumento na função abaixo para evitar duplicatas
-    melhores = popC.selecDet(gl.nTop,idsolsB) # retorna iterador com as keys das soluções escolhidas em B
-    for iSol in melhores: popB.addSol(popC.sols[iSol]) # adiciona à população C as soluções escolhidas acima
-    """ será que aqui a declaração está deletando algo? acho que não."""
+    idsolsB = [popB.sols[key].idsol for key in popB.sols] # lista de idsols das soluções que existem em B. deve entrar como argumento na função abaixo para evitar duplicatas
+    melhores = popC.selecDet(math.ceil(gl.fatorTop*len(popC.sols)),idsolsB) # retorna iterador com as keys das soluções escolhidas em C
+    for iSol in melhores: popB.addSolCheck(popC.sols[iSol]) # adiciona à população B as soluções escolhidas acima
     
     gl.wrRoleta = open(gl.folder+"output\\wrRoletaCA.txt",'a')
     gl.wrRoleta.write("\n"+str(iAlg)+',')
     # roleta C --> A
     idsolsA = [popA.sols[key].idsol for key in popA.sols] # lista de idsols das soluções que existem em A. deve entrar como argumento na função abaixo para evitar duplicatas
-    roleta = popC.selecRoleta(gl.nRol,idsolsA) # retorna iterador com as keys das soluções escolhidas em B
-    for iSol in roleta: popA.addSol(popC.sols[iSol]) # adiciona à população A as soluções escolhidas acima
+    roleta, erroRoleta = popC.selecRoleta(math.floor(gl.fatorRol*len(popC.sols)),idsolsA) # retorna iterador com as keys das soluções escolhidas em B
+    for iSol in roleta: popA.addSolCheck(popC.sols[iSol]) # adiciona à população A as soluções escolhidas acima
     if erroRoleta: gl.logf.write("\n["+str(iAlg)+"] Roleta recebeu custos iguais na seleção final popC-->popA, portanto a escolha é sem pesos. ")
     
+    ### SAÍDA DE DADOS #####
+       
+    # plota na tela o número máximo de viagens
+    print(iAlg, popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol())
     
     #plot custo popB mínimo custo
     best = popB.selecDet(1,[])[0]

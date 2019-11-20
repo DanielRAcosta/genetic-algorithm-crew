@@ -54,7 +54,7 @@ class Solucao:
     ### ADIÇÃO ######
 
     def addServ(self, servx):   #adiciona um novo serviço a essa solução
-        self.servs.update({len(self.servs) : servx}) # guarda o serviço no dicionario servs
+        self.servs.update({list(self.servs.keys())[-1]+1 : servx}) # guarda o serviço no dicionario servs
         self.viagSol.extend(copy.deepcopy(servx.viags))
         self.sortV() #coloca as viagens em ordem ascendente
     
@@ -97,8 +97,51 @@ class Solucao:
             self.completou()
             return False
 
-    ############ CÓPIA ######################
+    ### GENÉTICOS ######
+    
+    def cruza(self, Pai2): #cruza duas soluções. gera um filho. entra a solução base e as viagens da solução a adicionar
+        filho = self.geraCopia()
         filho.idpais[1] = Pai2.idsol
+        
+        notInSon = [vx for vx in Pai2.viagSol if vx not in filho.viagSol]
+        
+        if len(notInSon) > 0:
+            for vx in notInSon:
+                adicionou = filho.encaixaVSol(vx)
+                
+                if adicionou == False:
+                    print("ERRO ESTRANHÍSSIMO AO ENCAIXAR VIAGEM NA SOLUÇÃO")
+            
+            # retorna aviso se deve ser adicionada como nova
+            return filho, True
+        else: #Pai2 não provocou qualquer mudança em Base
+            if len(filho.viagSol) == len(gl.vdict['hi']): self.completou()
+            #depois verificar se esse if acima não deveria retornar true
+            return filho, False
+            #else: print("Solução Pai2 só tem viagens que já estão em Pai1, mas não está completa.")
+        
+    
+    def muta(self):            #realiza mutação na solução atual. a aleatoriedade está fora dessa função, no bloco do código.
+        if len(self.viagSol)<gl.algMutNeg*len(gl.vdict['hi']): self.mutaAdd()
+        elif rd.random()<gl.probMutNeg: self.mutaDel()
+        elif len(self.viagSol)<len(gl.vdict['hi']): self.mutaAdd()
+        #else: solução na fase final do algoritmo, que não foi sorteada pra retirar viagem e que não pode receber viagem pois é completa
+            
+    def mutaAdd(self):
+        vx = self.viagNovaRandom()
+        adicionou = self.encaixaVSol(vx)
+        if adicionou == False: print("ERRO ESTRANHÍSSIMO AO ENCAIXAR VIAGEM NA SOLUÇÃO")
+        
+    def mutaDel(self):
+        print("mutaDel - list servs ",list(self.servs))
+        serv = np.random.choice(list(self.servs), size=1, replace=False)[0]
+        print(serv)
+        deleta = np.random.choice(self.servs[serv].viags, size=1, replace=False)[0]
+        print(self.servs[serv].viags)
+        print(deleta)
+        self.servs[serv].viags.remove(deleta)
+        self.viagSol.remove(deleta)
+        if self.servs[serv].viags == []: self.servs.pop(serv)
         
     #### CUSTOS ######
 
@@ -154,9 +197,6 @@ class Solucao:
         fig = ff.create_gantt(df, group_tasks=True, title=titulo)
         fig.write_image(gl.folder+"output\\img\\"+str(iAlg)+"_pop"+popname+"_"+str(self.idsol)+".png")
           
-    ############# GENÉTICOS #################
-    
-    def cruza(self, viagSolPai2): #cruza duas soluções. gera um filho. entra a solução base e as viagens da solução a adicionar
     ### ANTIGAS ######
 """ 
 plots encaixa vsol   

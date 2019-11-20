@@ -1,4 +1,3 @@
-#%%
 """
 Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritmo Genético
 Daniel Rodrigues Acosta
@@ -9,9 +8,8 @@ Junho/2019
 import variaveisGlobais as gl
 import random as rd
 import numpy as np
-import datetime as dtm
 import pickle as pk
-#import os
+import os
 
 def inpop(nome):
     pkfile = open(gl.folder+'output\\'+gl.inputPopFolder+'\\pop_'+nome+'.txt', mode='br')
@@ -40,16 +38,15 @@ class Populacao:                    #decidir como lidar com a população - como
     def addSolCheck(self, solx):
         solx.sortV()
         custox = solx.custo()
-        contemx = False
+        contemx = False 
         for soly in self.sols:
             self.sols[soly].sortV()
             if self.sols[soly].viagSol == solx.viagSol and self.sols[soly].custo() == custox: contemx = True
-            
-        if contemx:
-            gl.logf.write("\n[addSolCheck - pop "+str(len(self.sols))+"] Filho não adicionado à população.")
-        else:
+        
+        if not contemx:
             self.addSol(solx) #filho EC
-            gl.logf.write("\n[addSolCheck - pop "+str(len(self.sols))+"] Filho adicionado à população.")
+            #gl.logf.write("\n[addSolCheck - pop "+str(len(self.sols))+"] Filho adicionado à população.")
+        #else: gl.logf.write("\n[addSolCheck - pop "+str(len(self.sols))+"] Filho não adicionado à população.")
         
     def excluiDet(self): #exclui deterministicamente as soluções com o maior custo
         qtde_solucoes_sobrando = len(self.sols)-self.npop #serão excluídas todas as soluções extras em relação à população máxima npop
