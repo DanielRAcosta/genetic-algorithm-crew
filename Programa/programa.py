@@ -14,19 +14,32 @@ import variaveisGlobais as gl
 import numpy as np
 import math
 import datetime
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib import style
+
 
 algStart = datetime.datetime.now()
 
-conv = open(gl.folder+ "output\\convergencia.txt", 'w')
-conv.write("\n################## EXECUÇÃO ÀS "+str(algStart)+" #################################")
-conv.write("\n[POPB] iAlg,idSol mais barata,nViagens,nServs,custo,custoG,custoH")
-conv.close()
+#conv = open(gl.folder+ "output\\convergencia.txt", 'w')
+#onv.write("\n################## EXECUÇÃO ÀS "+str(algStart)+" #################################")
+#conv.write("\n[POPB] iAlg,idSol mais barata,nViagens,nServs,custo,custoG,custoH")
+#conv.close()
 gl.sols.write("[POPC] iAlg, sol, idSol, custoG [segundos], custoH [segundos], qtde Servs, qtde Viags, viags ")
 gl.wrRoleta.write("### ROLETA C-A ## - execução às "+str(algStart))
 
 
 ### INICIA O ALGORITMO ######
 
+style.use('fivethirtyeight')
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
+ax2 = fig.add_subplot(1,1,1)
+ax3 = fig.add_subplot(1,1,1)
+ax4 = fig.add_subplot(1,1,1)
+ax5 = fig.add_subplot(1,1,1)
+                  
+                  
 if gl.modo_inicio == 0:
     popA = pp.Populacao(gl.na, 'A')
     popB = pp.Populacao(gl.nb, 'B')
@@ -62,6 +75,42 @@ def guardaExecucao():
     pp.outpop(popC, 'c')    
     #pp.outpop(gl.popCompl, 'f')
     pp.outpop(gl.idsolGlob, 'id')
+    
+def animate(i):
+    global ax1
+    global ax2
+    global ax3
+    global ax4
+    global ax5
+    
+    
+    graph_data = open(gl.folder+ "output\\convergencia.txt",'r').read()
+    lines = graph_data.split('\n')
+    xv = []
+    xs = []
+    xc = []
+    xg = []
+    xh = []
+    ys = []
+    for line in lines:
+        if len(line) > 1:
+            [i, idSolp, nvp, nsp, cp, cg, ch] = line.split(',')
+            xv.append(float(nvp))
+            xs.append(float(nsp))
+            xc.append(float(cp))
+            xg.append(float(cg))
+            xh.append(float(ch))
+            ys.append(float(i))
+    ax1.clear()
+    ax2.clear()
+    ax3.clear()
+    ax4.clear()
+    ax5.clear()
+    ax1.plot(ys, xv)
+    ax2.plot(ys, xs)
+    ax3.plot(ys, xc)
+    ax4.plot(ys, xg)
+    ax5.plot(ys, xh)
 
 def principal():
     #popA.gantt(iAlg) #plot gantt image
@@ -167,6 +216,14 @@ def principal():
     #ialg - sol min custo - nviag - nserv - custo - custo g - custo h 
     conv.close()
     
+        
+    #plot ao vivo
+    if float(iAlg/30).is_integer() and gl.modo_salva == 1: guardaExecucao()
+    
+    if float(iAlg/30).is_integer():            
+        ani = animation.FuncAnimation(fig, animate, interval=1000)
+        plt.show()    
+    
     #plot all text
     #popA.wrpop(iAlg)
     #popB.wrpop(iAlg)
@@ -177,12 +234,14 @@ def principal():
     #popB.gantt(iAlg)
        
     
-#### EXECUTA O LAÇO PRINCIPAL ####
+    
+    
+    
+#### EXECUTA O LAÇO PRINCIPAL ######################################
     
 if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
     for iAlg in range(1,gl.alg+1):
-        principal()
-        if float(iAlg/30).is_integer() and gl.modo_salva == 1: guardaExecucao()
+        principal()  
         
 elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
     iAlg = 0  
@@ -190,10 +249,10 @@ elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções
     while gl.solCompl < gl.nCompl:
         iAlg = iAlg +1
         principal()
-        if float(iAlg/30).is_integer() and gl.modo_salva == 1: guardaExecucao()
         
 # guarda as populações num arquivo pickle para usar depois
 if gl.modo_salva == 1: guardaExecucao()
+
     
 algEnd = datetime.datetime.now()
 gl.logf.write("Algoritmo executado em "+str(algEnd-algStart))

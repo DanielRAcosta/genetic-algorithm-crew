@@ -12,9 +12,9 @@ import os
 
 # Caminhos das Pastas
 inputPopFolder = 'keep_20_11_3'
-outputPopFolder = 'keep_20_11_3'
+outputPopFolder = 'keep_20_11_4'
 
-modo_inicio = 1     # 0 = do zero                       1 = ler do binário
+modo_inicio = 0     # 0 = do zero                       1 = ler do binário
 modo_fim = 0        # 0 = até iAlg=alg                  1 = até ter nCompl soluções completas 
 modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
 alg = 10000             # n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)

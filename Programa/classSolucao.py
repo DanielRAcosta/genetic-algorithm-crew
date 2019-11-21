@@ -169,9 +169,9 @@ class Solucao:
     
     def servFalta(self): return (len(gl.vdict['hi']) - len(self.viagSol)) / gl.viagsPorServ
     
-    def custoh(self): return self.servFalta() * gl.hmus + self.servFalta() * gl.alfa * gl.jornGlob #custo h - penalidade relativa a "quanto falta para atingir uma suposta solução ótima"
+    def custoh(self): return (self.servFalta() * gl.hmus + self.servFalta() * gl.alfa * gl.jornGlob)*gl.gama #custo h - penalidade relativa a "quanto falta para atingir uma suposta solução ótima"
         
-    def custo(self): return self.custog() + self.custoh()*gl.gama           #determina o custo da solução atual de acordo com a tese de Elizondo
+    def custo(self): return self.custog() + self.custoh()           #determina o custo da solução atual de acordo com a tese de Elizondo
     
     def custotry(self): return [self.idsol, (gl.tau*self.folgaI() + self.folgaE() + gl.alfa*self.jorns()) + (self.servFalta() * gl.hmus + self.servFalta() * gl.alfa * gl.jornGlob) , self.folgaI(), self.folgaE(), self.jorns(), self.servFalta(), self.servFalta()*gl.hmus, self.servFalta() * gl.alfa * gl.jornGlob ]
 
