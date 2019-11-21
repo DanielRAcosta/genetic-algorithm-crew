@@ -10,6 +10,8 @@ import classServico as sv
 import classSolucao as sl
 import classPopulacao as pp
 import variaveisGlobais as gl
+
+import numpy as np
 import math
 import datetime
 
@@ -120,6 +122,12 @@ def principal():
             
         if gl.carregaPais == 1: popC.addSolCheck(popA.sols[iSol])
         #só no final os pais advindos de A são adicionados à população, para que também sejam passíveis de mutação na próxima etapa
+        
+        if gl.carregaPais == 0 and popC.sols == {}:
+            popC.addSolCheck(popA.sols[iSol])
+            choice = np.random.choice(list(popC.sols), size=1, replace=False)[0]
+            popC.sols[choice].muta()
+        
 
     # EXCLUI deterministicamente/roleta? as piores dos grupos constantes A & B
     popA.excluiRol()
