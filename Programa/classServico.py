@@ -69,6 +69,8 @@ class Servico:
         return durTotal
 
     def jornV(self): return self.hf()-self.hi()
+    
+    def horaPico(self): return sum([gl.vdict['pp'][vx] for vx in self.viags])*dtm.timedelta(hours = 6)
 
     ### VERIFICAÇÕES ######
 

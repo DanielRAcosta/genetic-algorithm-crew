@@ -160,10 +160,12 @@ class Solucao:
         for servx in self.servs: jorns = jorns + self.servs[servx].jorn 
         return jorns
     
-#    def horaPico(self):
-        
+    def horaPico(self):
+        horaPico = dtm.timedelta(0)
+        for servx in self.servs: horaPico = horaPico + self.servs[servx].horaPico()
+        return horaPico
 
-    def custog(self): return gl.tau*self.folgaI() + self.folgaE() + gl.alfa*self.jorns() #custo g - custo da solução atual/existente """custo dos horarios de pico - FAZER DEPOIS"""
+    def custog(self): return gl.tau*self.folgaI() + self.folgaE() + gl.alfa*self.jorns() + gl.delta*self.horaPico() #custo g - custo da solução atual/existente
     
     def servFalta(self): return (len(gl.vdict['hi']) - len(self.viagSol)) / gl.viagsPorServ
     
