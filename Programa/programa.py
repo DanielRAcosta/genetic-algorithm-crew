@@ -119,13 +119,24 @@ def principal():
     
     ### CRUZAMENTO ############
     # pra cada um dos nb melhores integrantes de A, de acordo com a função seleçãoDeterminística 
+    
+    # seleciona os pais de A que servem como base
     pais1 = popA.selecDet(round(gl.fs*gl.na),[])
-    for iSol in pais1:  # CRUZAMENTO B->C - repetir até gerar nCruz filhos cruzados dos pais de A
+    
+    # lista de pais de E - criada fora pra que não haja duplicatas
+    selecE = {}
+    for iSol in pais1:
+        vx = popA.sols[iSol].viagNovaRandom()
+        while vx in selecE: vx = popA.sols[iSol].viagNovaRandom()
+        selecE.update({iSol: vx})
+    
+    # realiza os cruzamentos
+    for iSol in pais1:  # CRUZAMENTO B->C
         #gl.logf.write("\nCruzamento - Pai1 id "+str(iSol)+" com viagens "+str(popA.sols[iSol].viagSol))
         # os pais dos cruzamentos aqui são buscados diretamente em A.
         
-        for jSol in range(gl.nCruz): # cruza com E (vdict)
-            vx = popA.sols[iSol].viagNovaRandom()
+        for jSol in range(gl.nCruz): # cruza com E (vdict) um nCruz numero de vezes
+            vx = selecE[iSol]
             if vx is not False: 
                 ex = sl.Solucao(sv.Servico(vx), [0,0]) # cria solução com viagem que ainda não existe em B
                 #gl.logf.write("\n[popC "+str(len(popC.sols))+" Cruzamento com E - Pai2 id "+str(ex.idsol)+" com viagens "+str(ex.viagSol))
@@ -223,6 +234,7 @@ def principal():
     if float(iAlg/30).is_integer():            
         ani = animation.FuncAnimation(fig, animate, interval=1000)
         plt.show()    
+        gl.popQuase.excluiDet()
     
     #plot all text
     #popA.wrpop(iAlg)

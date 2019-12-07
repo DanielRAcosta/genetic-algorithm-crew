@@ -26,9 +26,60 @@ class Solucao:
     def sortV(self): self.viagSol.sort(key=lambda vx : gl.vdict['hi'][vx])    
 
     def completou(self):
-        gl.popCompl.addSolCheck(self.geraCopia()) #é adicionada uma cópia aqui, que vai ficar intocada.
-        print("Uma solução completa foi atingida. Cópia armazenada em popCompl.")
-        gl.solCompl = gl.solCompl +1
+        # checar se não está com serviços ruins!
+        ok = True
+                
+        ids = list(self.servs)
+        for serv in ids:
+            
+            #ALMOÇO INEXISTENTE?    
+            if self.servs[serv].almI==None:
+                self.servs[serv].tentaAtribuirAlmoco()
+                
+            if self.servs[serv].almI==None:    
+                if ok: gl.popQuase.addSolCheck(self.geraCopia())
+                ok = False
+                for vx in self.servs[serv].viags:
+                    self.viagSol.remove(vx)
+                self.servs.pop(serv)
+        
+        
+        ids = list(self.servs)
+        for serv in ids:
+            
+            #ALMOÇO EM HORARIO RUIM?
+            if self.servs[serv].hi() + gl.minInicAlm + gl.intervPontaGlob > self.servs[serv].almI or self.servs[serv].hf() - gl.maxFimAlm - gl.intervPontaGlob <self.servs[serv].almF:
+                
+                if ok: gl.popQuase.addSolCheck(self.geraCopia())
+                ok = False
+                for vx in self.servs[serv].viags:
+                    self.viagSol.remove(vx)
+                self.servs.pop(serv)
+                
+                
+        
+        ids = list(self.servs)
+        for serv in ids:
+            
+            #POUCAS VIAGENS?
+            if len(self.servs[serv].viags) < round(gl.viagsPorServ/2) -1:
+                
+                if ok: gl.popQuase.addSolCheck(self.geraCopia())
+                ok = False 
+                gl.popQuase.addSolCheck(self.geraCopia())
+                for vx in self.servs[serv].viags:
+                    self.viagSol.remove(vx)
+                self.servs.pop(serv)
+                
+                
+        if ok:
+            
+            if gl.popCompl.addSolCheck(self.geraCopia()): #é adicionada uma cópia aqui, que vai ficar intocada.
+                # se deu True, adicionou
+                gl.solCompl = gl.solCompl +1
+                print("######################")
+                print(gl.solCompl, " - Uma solução completa foi atingida. Cópia armazenada em popCompl.")
+            
 
     def geraCopia(self):
         serv0filho = sv.Servico(0)
@@ -112,6 +163,7 @@ class Solucao:
         
         if len(notInSon) > 0:
             for vx in notInSon:
+                #print("Cruzamento -> encaixaVSol - filho",filho.idsol," Pai2", Pai2.idsol, "Pai1", self.idsol, "vx", vx)
                 adicionou = filho.encaixaVSol(vx)
                 
                 if adicionou == False:
@@ -134,16 +186,17 @@ class Solucao:
             
     def mutaAdd(self):
         vx = self.viagNovaRandom()
+        #print("MutaAdd -> encaixaVSol - idsol", self.idsol)
         adicionou = self.encaixaVSol(vx)
         if adicionou == False: print("ERRO ESTRANHÍSSIMO AO ENCAIXAR VIAGEM NA SOLUÇÃO")
         
     def mutaDel(self):
-        print("mutaDel - list servs ",list(self.servs))
+        print("mutaDel")
         serv = np.random.choice(list(self.servs), size=1, replace=False)[0]
-        print(serv)
+        #print(serv)
         deleta = np.random.choice(self.servs[serv].viags, size=1, replace=False)[0]
-        print(self.servs[serv].viags)
-        print(deleta)
+        #print(self.servs[serv].viags)
+        #print(deleta)
         self.servs[serv].viags.remove(deleta)
         self.viagSol.remove(deleta)
         if self.servs[serv].viags == []: self.servs.pop(serv)
@@ -199,9 +252,21 @@ class Solucao:
         
     def gantt(self, iAlg, popname):
         df = []
-        for serv in self.servs: df.extend([dict(Task=str(serv), Start=gl.vdict['hi'][vx], Finish=gl.vdict['hf'][vx]) for vx in self.servs[serv].viags])
-        titulo = "["+str(iAlg)+"] pop"+popname+" - Sol "+str(self.idsol)+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])+" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"
-        fig = ff.create_gantt(df, group_tasks=True, title=titulo)
+        ids = list(self.servs)
+        ids.sort(key= lambda idserv: self.servs[idserv].jornI())
+        for serv in ids:
+            if self.servs[serv].almI != None: df.append(dict(Task=str(serv), Start=self.servs[serv].almI, Finish=self.servs[serv].almF, Resource='Almoço'))
+            df.extend([dict(Task=str(serv), Start=gl.vdict['hi'][vx], Finish=gl.vdict['hf'][vx], Resource='Viagens') for vx in self.servs[serv].viags])
+            df.append(dict(Task=str(serv), Start =self.servs[serv].jornI(), Finish=self.servs[serv].jornI()+gl.intervPontaGlob, Resource='Recolhe'))
+            df.append(dict(Task=str(serv), Start =self.servs[serv].jornF()-gl.intervPontaGlob, Finish=self.servs[serv].jornF(), Resource='Recolhe'))
+            #df.append(dict(Task=str(serv), Start =self.servs[serv].jornI()+gl.intervPontaGlob, Finish=self.servs[serv].jornF()-gl.intervPontaGlob, Resource='Jornada'))
+            
+            
+        
+        titulo = "["+str(iAlg)+"] pop"+popname+" - Sol "+str(self.idsol)+" - nViags "+str(len(self.viagSol))+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])+" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"
+        colors = dict(Viagens='rgb(219,0,0)', Almoço=(0.95,0.9,0.17), Recolhe='rgb(150,0,150)',Jornada='rgb(255,255,255)')
+        
+        fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True, group_tasks=True, title=titulo)
         fig.write_image(gl.folder+"output\\img\\"+str(iAlg)+"_pop"+popname+"_"+str(self.idsol)+".png")
           
     ### ANTIGAS ######

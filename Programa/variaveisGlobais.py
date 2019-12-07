@@ -63,6 +63,7 @@ if modo_inicio==0:
 elif modo_inicio==1:
     idsolGlob = pp.inpop('id')
     popCompl = pp.inpop('f') # População para guardar Soluções Completas
+popQuase = pp.Populacao(10, 'q')
 custosIguais = 0
 solCompl = 0
 
