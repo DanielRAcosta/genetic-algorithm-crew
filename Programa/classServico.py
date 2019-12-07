@@ -5,7 +5,6 @@ Universidade Federal do Rio Grande do Sul
 Junho/2019
 """
 import datetime as dtm
-#import math
 import variaveisGlobais as gl
 
 class Servico:
@@ -37,31 +36,92 @@ class Servico:
         else:
             return self.almI+self.jornV()-self.condEf()-self.almF
     
-    def atribuiAlmoco(self): # almoço é testado aproximadamente no meio do serviço
-        adicionou = False
-        i=1
-        while adicionou == False and i<len(self.viags): #se ja chegou mais ou menos no meio
-            if gl.vdict['hf'][self.viags[i-1]]+gl.almGlob < gl.vdict['hi'][self.viags[i]]: #se não colide, coloca entre viagens
-                self.almI = gl.vdict['hf'][self.viags[i-1]]
-                self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
-                adicionou = True
-            i=i+1
-            
-        if adicionou == False and i == len(self.viags):
-            if self.hf()<gl.meioTab:
-                self.almI = gl.vdict['hf'][self.viags[i-1]]
-                self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
-                adicionou = True
-            else:
-                self.almF = gl.vdict['hi'][self.viags[0]]
-                self.almI = gl.vdict['hi'][self.viags[0]] - gl.almGlob
-                adicionou = True
-            if adicionou == False: print("Problema ao atribuir almoço.")
-                
-               
-        # almoço, horario inicial e final dele, não precisam estar lá na inicialzação do serviço
     
-    def folgaE(self): return self.jorn - self.jornV()
+    def tentaAtribuirAlmoco(self): # almoço é testado aproximadamente no meio do serviço
+        adicionou = False
+        
+        # tenta adicionar bem no meio - vê se cabe no tempo e se colide com viagens
+        if self.hf() - self.hi() - self.condEf() > gl.almGlob:
+            meioServ = self.hi() + (self.hf()-self.hi())/2
+            """TENTATIVA 1 - BEM NO MEIO DO SERVIÇO"""
+            if self.encaixaHorario(meioServ - gl.almGlob/2,meioServ + gl.almGlob/2): # if folga I > almGlob (só que abri a conta pra simplificar)
+                self.almI = meioServ - gl.almGlob/2
+                self.almF = meioServ + gl.almGlob/2
+                adicionou = True
+            else: #sei que tem espaço mas não bem no meio... vai ter que ir vendo os espaços
+                """TENTATIVA 2 - NO MEIO MAS NÃO EXATAMENTE"""
+                #mapeia espaços vazios internos
+                #supondo que ta na ordem... primeiro pega as viagens
+                hiFolgasList = [gl.vdict['hf'][idv] for idv in self.viags]
+                hfFolgasList = [gl.vdict['hi'][idv] for idv in self.viags]
+                
+                #hi da primeira folga = hf da primeira viagem, e assim por diante
+                hiFolgasList = hiFolgasList[:-1] #exclui ultimo
+                #hf da primeira folga = hi da segunda viagem, e assim por diante
+                hfFolgasList = hfFolgasList[1:] #exclui primeiro
+                
+                #calcula duração folgas
+                durFolgasList=[]
+                deletaItemList=[]
+                for i in range(len(hiFolgasList)):
+                    durFolgasList.append(hfFolgasList[i] - hiFolgasList[i])
+                    if durFolgasList[i]<gl.almGlob: deletaItemList.append(i) #guarda index para deletar depois todas as que nao cabem
+                
+                #deleta as que não cabem
+                if len(deletaItemList) < len(durFolgasList): #só se tiver alguma que cabe
+                    
+                    i = len(deletaItemList)-1 
+                    while i >= 0 :
+                        hiFolgasList.pop(deletaItemList[i])
+                        hfFolgasList.pop(deletaItemList[i])
+                        durFolgasList.pop(deletaItemList[i])
+                        i -= 1
+                        
+                    #ordenar por mais proximos do meio
+                    distanciaAteMeio = []
+                    antesMeio=[]
+                    for hi in hiFolgasList: #dois casos pra que nao haja delta negativo
+                        if hi<meioServ and hfFolgasList[hiFolgasList.index(hi)]<meioServ:
+                                distanciaAteMeio.append(meioServ-hfFolgasList[hiFolgasList.index(hi)])
+                                antesMeio.append(True)
+                        else:
+                            distanciaAteMeio.append(hi-meioServ)
+                            antesMeio.append(False)
+                        
+                    indices_ordenados = []
+                    for i in range(len(distanciaAteMeio)): indices_ordenados.append((i,antesMeio[i]))
+                    indices_ordenados.sort(key= lambda indice: distanciaAteMeio[indice[0]])
+                    indice_mais_proxima = indices_ordenados[0] #pegar so a mais proxima que cabe
+                        
+                    if indice_mais_proxima[1]:
+                        self.almF = hfFolgasList[indice_mais_proxima[0]]
+                        self.almI = self.almF - gl.almGlob
+                    else:
+                        self.almI = hiFolgasList[indice_mais_proxima[0]]
+                        self.almF = self.almI + gl.almGlob
+                    
+                    adicionou = True
+                    
+                    # ver se atende às horas min e max de almoço... só se jornV() eh grande o bastante
+                    """faltou"""
+        if not adicionou:
+            """TENTATIVA 3 """
+            if self.hi()>gl.meioTab-dtm.timedelta(hours=1) and self.jornV()>dtm.timedelta(hours=1)+gl.intervPontaGlob and gl.almGlob<=gl.jornGlob-gl.intervPontaGlob-self.jornV()-dtm.timedelta(hours=2.5): #começa muito tarde... põe antes
+                self.almF = self.hi()
+                self.almI = self.almF - gl.almGlob
+                adicionou = True
+            else: #começa cedo, põe depois
+                self.almI = self.hf()
+                self.almF = self.almI + gl.almGlob
+                adicionou = True
+        return adicionou
+                
+#    def encaixaViagAlmoco(self, vx): #retorna True ou False se dá pra empurrar o almoço pro lado e mesmo assim alocar a viagem.
+        """se der True, alteração do almoço deve ser feita aqui e a da viagem fora"""
+        
+    
+    def folgaE(self): return self.jorn - self.jornV() - gl.intervPontaGlob*2
+
 
     def condEf(self):          #calcula a condução efetiva - suponho que seja a soma de todas as durações de viagens
         durTotal = dtm.timedelta(0)
@@ -70,6 +130,12 @@ class Servico:
 
     def jornV(self): return self.hf()-self.hi()
     
+    #apenas para visualizar no Gantt, centralizada
+    def jornI(self): return self.hi() + self.jornV()/2 - self.jorn/2
+    
+    #apenas para visualizar no Gantt, centralizada
+    def jornF(self): return self.jornI() + self.jorn
+    
     def horaPico(self): return sum([gl.vdict['pp'][vx] for vx in self.viags])*dtm.timedelta(hours = 6)
 
     ### VERIFICAÇÕES ######
@@ -77,14 +143,14 @@ class Servico:
     def cabeJornada(self,idvx): #checa se para realizar a viagem desejada, a jornada máxima não seria estourada
         # quando colocar os tempos extras do trabalhador chegar no deposito (fim e inicio de jornada), cuidar aqui também.
         if gl.vdict['hi'][idvx]>self.hf(): #caso 1 - viagem nova no final do serviço
-            if gl.vdict['hf'][idvx]-self.hi() < self.jorn:
+            if gl.vdict['hf'][idvx]-self.hi() < self.jorn - gl.intervPontaGlob*2 :
                 #gl.logf.write("\n[cabeJornada] True Caso 1 - viagem cabe no final do serviço")
                 return True # CABE se mesmo colocando ela, não ultrapassa a jornada
             else:
                 #gl.logf.write("\n[cabeJornada] False Caso 1 - viagem muito tarde")
                 return False # NAO CABE - ultrapassou               
         elif gl.vdict['hf'][idvx]<self.hi(): #caso 2 - viagem nova no inicio do serviço
-            if self.hf()-gl.vdict['hi'][idvx] < self.jorn:
+            if self.hf()-gl.vdict['hi'][idvx] < self.jorn - gl.intervPontaGlob*2 :
                 #gl.logf.write("\n[cabeJornada] True Caso 2 - viagem cabe no início do serviço")
                 return True # CABE
             else:
@@ -104,13 +170,10 @@ class Servico:
             anterior = i_hs[hs.index(max(hs))]
             if gl.vdict['hf'][anterior]<=gl.vdict['hi'][idvx] and gl.vdict['tf'][anterior]==gl.vdict['ti'][idvx]:
                 encaixa_ant = True
-                #gl.logf.write("\n[encaixaTerm] Encaixa Anterior True")
             else:
                 encaixa_ant = False 
-                #gl.logf.write("\n[encaixaTerm] Encaixa Anterior False")
         except:
             encaixa_ant = True
-            #gl.logf.write("\n[encaixaTerm] Encaixa Anterior True - não existe viagem antes, então encaixa")
             
         i_hs = [idv for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
         hs = [gl.vdict['hi'][idv] for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
@@ -118,35 +181,36 @@ class Servico:
             posterior = i_hs[hs.index(min(hs))]
             if gl.vdict['hf'][idvx]<=gl.vdict['hi'][posterior] and gl.vdict['tf'][idvx]==gl.vdict['ti'][posterior]:
                 encaixa_post = True
-                #gl.logf.write("\n[encaixaTerm] Encaixa Posterior True")
             else:
                 encaixa_post = False 
-                #gl.logf.write("\n[encaixaTerm] Encaixa Posterior False")
         except:
             encaixa_post = True
-            #gl.logf.write("\n[encaixaTerm] Encaixa Posterior False - não viagem antes, então encaixa")
-
-        #gl.logf.write("\n[encaixaTerm] Encaixa Final "+ str( encaixa_ant and encaixa_post))
         return encaixa_ant and encaixa_post   
     
     def colideAlmoco(self, vx):
-        if self.almI>=gl.vdict['hi'][vx] and self.almI<gl.vdict['hf'][vx]:
-            #logf.write("\n[Colidealmoço] Caso 1 - inicio da almoço está dentro da v1, mas v1 continua")
-            return True #início da almoço está dentro da v1, mas v1 continua
+        if (self.almI != None) and (self.almF != None):
+            if self.almI>=gl.vdict['hi'][vx] and self.almI<gl.vdict['hf'][vx]:
+                return True #início da almoço está dentro da v1, mas v1 continua
+            elif gl.vdict['hi'][vx]>=self.almI and gl.vdict['hi'][vx]<self.almF:
+                return True #início da v1 está dentro da almoço, mas almoço continua
+            elif gl.vdict['hi'][vx] == self.almI or gl.vdict['hf'][vx] == self.almF: #ambas coincidem em pelo menos um horário
+                return True 
+            else: return False #viagens não colidem
+        else: return False # não colidem porque ainda não tem almoço
+    
+    def encaixaHorario(self, hi1, hf1): #input gl.vdict['hi'][i1], gl.vdict['hf'][i1]
+        colide = False
+        for i2 in self.viags:    
+            if gl.vdict['hi'][i2]>=hi1 and gl.vdict['hi'][i2]<hf1:
+                colide = True #início da v2 está dentro da v1, mas v1 continua
+            elif hi1>=gl.vdict['hi'][i2] and hi1<gl.vdict['hf'][i2]:
+                colide = True #início da v1 está dentro da v2, mas v2 continua            
+            elif hi1 == gl.vdict['hi'][i2] or hf1 == gl.vdict['hf'][i2]: #ambas coincidem em pelo menos um horário
+                colide = True 
+        return not colide
         
-        elif gl.vdict['hi'][vx]>=self.almI and gl.vdict['hi'][vx]<self.almF:
-            #logf.write("\n[Colidealmoço] Caso 2 - inicio da v1 está dentro da almoço, mas almoço continua")
-            return True #início da v1 está dentro da almoço, mas almoço continua
-        
-        elif gl.vdict['hi'][vx] == self.almI or gl.vdict['hf'][vx] == self.almF: #ambas coincidem em pelo menos um horário
-            #logf.write("\n[Colidealmoço] Caso 3 - coincidem")
-            #print(i, "| Viagens comparadas têm mesmo hi ou hf.")
-            #if gl.vdict['ti'][vx] == gl.vdict['ti'][i2] or gl.vdict['tf'][vx] == gl.vdict['tf'][i2]: #as viagens são idênticas!!!
-                #print(i, "| Viagens comparadas têm mesmo ti ou tf")
-            return True 
-        else: return False #viagens não colidem 
-        
-    def encaixaHorario(self, i1):
+
+"""    def encaixaHorario_old(self, i1):
         colide = False
         for i2 in self.viags:
                 #if gl.colideHorario(vx,vserv) == True: colide = colide + 1
@@ -165,7 +229,26 @@ class Servico:
                     #print(i, "| Viagens comparadas têm mesmo ti ou tf")
                 colide = True 
         return not colide
-
-    
-
         
+#atribuialmoço antigo:
+
+        if atribui:        
+            adicionou = False
+            i=1
+            while adicionou == False and i<len(self.viags): #se ja chegou mais ou menos no meio
+                if gl.vdict['hf'][self.viags[i-1]]+gl.almGlob < gl.vdict['hi'][self.viags[i]]: #se não colide, coloca entre viagens
+                    self.almI = gl.vdict['hf'][self.viags[i-1]]
+                    self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
+                    adicionou = True
+                i=i+1
+                
+            if adicionou == False and i == len(self.viags):
+                if self.hf()<gl.meioTab:
+                    self.almI = gl.vdict['hf'][self.viags[i-1]]
+                    self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
+                    adicionou = True
+                else:
+                    self.almF = gl.vdict['hi'][self.viags[0]]
+                    self.almI = gl.vdict['hi'][self.viags[0]] - gl.almGlob
+                    adicionou = True
+                if adicionou == False: print("Problema ao atribuir almoço.")"""

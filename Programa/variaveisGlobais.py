@@ -39,9 +39,14 @@ pm = 0.2        #probabilidade de mutação
 nCruz = 1       #nº soluções filhas adicionadas no cruzamento
 fatorTop = 0.3  #nº soluções que sobrevivem na seleção Deterministica final
 fatorRol = 0.3  #nº soluções que sobrevivem na seleção Roleta final
+fatorMinServ = 0.3 # tamanho minimo do serviço em numero de viagens 
+minViagAlm = 4
 
 jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
 almGlob = dtm.timedelta(hours = 0.5)    #duracao fixa da colacao
+intervPontaGlob = dtm.timedelta(hours=0.5)
+minInicAlm = dtm.timedelta(hours=2.5)
+maxFimAlm = dtm.timedelta(hours=1)
 
 user = os.getlogin()
 folder = "C:\\Users\\"+ user+"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"

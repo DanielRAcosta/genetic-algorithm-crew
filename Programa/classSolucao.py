@@ -63,25 +63,30 @@ class Solucao:
         j = 0 #para percorrer cada serviço da solução
         while adicionou == False and j<len(self.servs): # percorre cada serviço da solução até chegar ao fim da lista de serviços
             if self.servs[j].cabeJornada(vx): #não extrapola a soma de tempos 
+                
+                if self.servs[j].almI == None: # falta atribuir almoço?
+                    if len(self.servs[j].viags)>gl.minViagAlm: # só se tiver no min duas viagens
+                        #print("Tenta Atrib Alm Solucao", self.idsol," Serv ", j)
+                        self.servs[j].tentaAtribuirAlmoco()
+                
                 if self.servs[j].encaixaTerminal(vx): #terminais compativeis de bairro e centro
-                    if self.servs[j].encaixaHorario(vx): #nao colide com nenhuma viagem                        
-                        if self.servs[j].almI == None:
-                            if len(self.servs)>gl.viagsPorServ/2 and rd.random()<gl.probAlm: #se ja chegou no momento de atribuir 
-                                self.servs[j].atribuiAlmoco() 
+                    if self.servs[j].encaixaHorario(gl.vdict['hi'][vx],gl.vdict['hf'][vx]): #nao colide com nenhuma viagem  
+                        if self.servs[j].colideAlmoco(vx): # se colide almoço
+                            pass
+                            #if self.servs[j].encaixaViagAlmoco(vx): # tenta mesmo assim arrastar o almoço pro lado... se der add vx
+                             #   self.servs[j].viags.append(vx)
+                              #  self.servs[j].sortV()
+                               # self.viagSol.append(vx)
+                                #self.sortV()
+                                #adicionou = True
                         
-                        if self.servs[j].almI == None:
+                        else: # se não colide
                             self.servs[j].viags.append(vx)
                             self.servs[j].sortV()
                             self.viagSol.append(vx)
                             self.sortV()
                             adicionou = True
                             
-                        elif not self.servs[j].colideAlmoco(vx):
-                            self.servs[j].viags.append(vx)
-                            self.servs[j].sortV()
-                            self.viagSol.append(vx)
-                            self.sortV()
-                            adicionou = True
             j = j + 1
             
         if j == len(self.servs) and adicionou == False: #se chegou ao final da lista de serviços sem ter adicionado
