@@ -4,8 +4,10 @@ Daniel Rodrigues Acosta
 Universidade Federal do Rio Grande do Sul
 Junho/2019
 """
-import datetime as dtm
+
 import variaveisGlobais as gl
+
+import datetime as dtm
 
 class Servico:
     def __init__(self, idvx):     #não tem como criar serviço sem viagem
@@ -36,6 +38,71 @@ class Servico:
         else:
             return self.almI+self.jornV()-self.condEf()-self.almF
     
+    def folgaE(self): return self.jorn - self.jornV() - gl.intervPontaGlob*2
+
+    def condEf(self):          #calcula a condução efetiva - suponho que seja a soma de todas as durações de viagens
+        durTotal = dtm.timedelta(0)
+        for idvx in self.viags: durTotal = durTotal + gl.vdict['dur'][idvx]
+        return durTotal
+
+    def jornV(self): return self.hf()-self.hi()
+    
+    def jornI(self): return self.hi() + self.jornV()/2 - self.jorn/2 # Jornada apenas para visualizar no Gantt, centralizada
+    
+    def jornF(self): return self.jornI() + self.jorn # Jornada apenas para visualizar no Gantt, centralizada
+    
+    def horaPico(self): return sum([gl.vdict['pp'][vx] for vx in self.viags])*dtm.timedelta(hours = 6)
+
+    ### VERIFICAÇÕES ######
+
+    def cabeJornada(self,idvx): #checa se para realizar a viagem desejada, a jornada máxima não seria estourada
+
+        if gl.vdict['hi'][idvx]>self.hf(): #caso 1 - viagem nova no final do serviço
+            if gl.vdict['hf'][idvx]-self.hi() < self.jorn - gl.intervPontaGlob*2 : return True # CABE se mesmo colocando ela, não ultrapassa a jornada
+            else: return False # NAO CABE - ultrapassou               
+            
+        elif gl.vdict['hf'][idvx]<self.hi(): #caso 2 - viagem nova no inicio do serviço
+            if self.hf()-gl.vdict['hi'][idvx] < self.jorn - gl.intervPontaGlob*2 : return True # CABE
+            else: return False # NAO CABE
+            
+        elif gl.vdict['hi'][idvx]>self.hi() and gl.vdict['hf'][idvx]<self.hf(): return True # caso 3 - viagem nova dentro do serviço - não altera duração total
+        else: return False # pela lógica, a nova viagem está colidindo (tem interseção) com a última do serviço.
+                
+    def encaixaTerminal(self, idvx): #verifica se os terminais da viagem encaixam no serviço
+        i_hs = [idv for idv in self.viags if gl.vdict['hf'][idv] < gl.vdict['hi'][idvx]]
+        hs = [gl.vdict['hf'][idv] for idv in self.viags if gl.vdict['hf'][idv] < gl.vdict['hi'][idvx]]
+        try: # caso a lista dê vazia
+            anterior = i_hs[hs.index(max(hs))]
+            if gl.vdict['hf'][anterior]<=gl.vdict['hi'][idvx] and gl.vdict['tf'][anterior]==gl.vdict['ti'][idvx]:
+                encaixa_ant = True
+            else: encaixa_ant = False 
+        except: encaixa_ant = True
+            
+        i_hs = [idv for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
+        hs = [gl.vdict['hi'][idv] for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
+        try: # caso a lista dê vazia
+            posterior = i_hs[hs.index(min(hs))]
+            if gl.vdict['hf'][idvx]<=gl.vdict['hi'][posterior] and gl.vdict['tf'][idvx]==gl.vdict['ti'][posterior]:
+                encaixa_post = True
+            else: encaixa_post = False 
+        except: encaixa_post = True
+        return encaixa_ant and encaixa_post   
+    
+    def colideAlmoco(self, vx):
+        if (self.almI != None) and (self.almF != None):
+            if self.almI>=gl.vdict['hi'][vx] and self.almI<gl.vdict['hf'][vx]: return True #início da almoço está dentro da v1, mas v1 continua
+            elif gl.vdict['hi'][vx]>=self.almI and gl.vdict['hi'][vx]<self.almF: return True #início da v1 está dentro da almoço, mas almoço continua
+            elif gl.vdict['hi'][vx] == self.almI or gl.vdict['hf'][vx] == self.almF: return True #ambas coincidem em pelo menos um horário  
+            else: return False #viagens não colidem
+        else: return False # não colidem porque ainda não tem almoço
+    
+    def encaixaHorario(self, hi1, hf1): #input gl.vdict['hi'][i1], gl.vdict['hf'][i1]
+        colide = False
+        for i2 in self.viags:    
+            if gl.vdict['hi'][i2]>=hi1 and gl.vdict['hi'][i2]<hf1: colide = True #início da v2 está dentro da v1, mas v1 continua
+            elif hi1>=gl.vdict['hi'][i2] and hi1<gl.vdict['hf'][i2]: colide = True #início da v1 está dentro da v2, mas v2 continua            
+            elif hi1 == gl.vdict['hi'][i2] or hf1 == gl.vdict['hf'][i2]: colide = True #ambas coincidem em pelo menos um horário
+        return not colide
     
     def tentaAtribuirAlmoco(self): # almoço é testado aproximadamente no meio do serviço
         adicionou = False
@@ -118,137 +185,4 @@ class Servico:
                 
 #    def encaixaViagAlmoco(self, vx): #retorna True ou False se dá pra empurrar o almoço pro lado e mesmo assim alocar a viagem.
         """se der True, alteração do almoço deve ser feita aqui e a da viagem fora"""
-        
     
-    def folgaE(self): return self.jorn - self.jornV() - gl.intervPontaGlob*2
-
-
-    def condEf(self):          #calcula a condução efetiva - suponho que seja a soma de todas as durações de viagens
-        durTotal = dtm.timedelta(0)
-        for idvx in self.viags: durTotal = durTotal + gl.vdict['dur'][idvx]
-        return durTotal
-
-    def jornV(self): return self.hf()-self.hi()
-    
-    #apenas para visualizar no Gantt, centralizada
-    def jornI(self): return self.hi() + self.jornV()/2 - self.jorn/2
-    
-    #apenas para visualizar no Gantt, centralizada
-    def jornF(self): return self.jornI() + self.jorn
-    
-    def horaPico(self): return sum([gl.vdict['pp'][vx] for vx in self.viags])*dtm.timedelta(hours = 6)
-
-    ### VERIFICAÇÕES ######
-
-    def cabeJornada(self,idvx): #checa se para realizar a viagem desejada, a jornada máxima não seria estourada
-        # quando colocar os tempos extras do trabalhador chegar no deposito (fim e inicio de jornada), cuidar aqui também.
-        if gl.vdict['hi'][idvx]>self.hf(): #caso 1 - viagem nova no final do serviço
-            if gl.vdict['hf'][idvx]-self.hi() < self.jorn - gl.intervPontaGlob*2 :
-                #gl.logf.write("\n[cabeJornada] True Caso 1 - viagem cabe no final do serviço")
-                return True # CABE se mesmo colocando ela, não ultrapassa a jornada
-            else:
-                #gl.logf.write("\n[cabeJornada] False Caso 1 - viagem muito tarde")
-                return False # NAO CABE - ultrapassou               
-        elif gl.vdict['hf'][idvx]<self.hi(): #caso 2 - viagem nova no inicio do serviço
-            if self.hf()-gl.vdict['hi'][idvx] < self.jorn - gl.intervPontaGlob*2 :
-                #gl.logf.write("\n[cabeJornada] True Caso 2 - viagem cabe no início do serviço")
-                return True # CABE
-            else:
-                #gl.logf.write("\n[cabeJornada] False Caso 2 - viagem muito cedo")
-                return False # NAO CABE
-        elif gl.vdict['hi'][idvx]>self.hi() and gl.vdict['hf'][idvx]<self.hf():
-            #gl.logf.write("\n[cabeJornada] True Caso 3 - viagem cabe no meio do serviço")
-            return True # caso 3 - viagem nova dentro do serviço - não altera duração total
-        else:
-            #gl.logf.write("\n[cabeJornada] False Caso 3 - viagem colide")
-            return False # pela lógica, a nova viagem está colidindo (tem interseção) com a última do serviço.
-                
-    def encaixaTerminal(self, idvx): #verifica se os terminais da viagem encaixam no serviço
-        i_hs = [idv for idv in self.viags if gl.vdict['hf'][idv] < gl.vdict['hi'][idvx]]
-        hs = [gl.vdict['hf'][idv] for idv in self.viags if gl.vdict['hf'][idv] < gl.vdict['hi'][idvx]]
-        try:
-            anterior = i_hs[hs.index(max(hs))]
-            if gl.vdict['hf'][anterior]<=gl.vdict['hi'][idvx] and gl.vdict['tf'][anterior]==gl.vdict['ti'][idvx]:
-                encaixa_ant = True
-            else:
-                encaixa_ant = False 
-        except:
-            encaixa_ant = True
-            
-        i_hs = [idv for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
-        hs = [gl.vdict['hi'][idv] for idv in self.viags if gl.vdict['hi'][idv] > gl.vdict['hf'][idvx]]
-        try:
-            posterior = i_hs[hs.index(min(hs))]
-            if gl.vdict['hf'][idvx]<=gl.vdict['hi'][posterior] and gl.vdict['tf'][idvx]==gl.vdict['ti'][posterior]:
-                encaixa_post = True
-            else:
-                encaixa_post = False 
-        except:
-            encaixa_post = True
-        return encaixa_ant and encaixa_post   
-    
-    def colideAlmoco(self, vx):
-        if (self.almI != None) and (self.almF != None):
-            if self.almI>=gl.vdict['hi'][vx] and self.almI<gl.vdict['hf'][vx]:
-                return True #início da almoço está dentro da v1, mas v1 continua
-            elif gl.vdict['hi'][vx]>=self.almI and gl.vdict['hi'][vx]<self.almF:
-                return True #início da v1 está dentro da almoço, mas almoço continua
-            elif gl.vdict['hi'][vx] == self.almI or gl.vdict['hf'][vx] == self.almF: #ambas coincidem em pelo menos um horário
-                return True 
-            else: return False #viagens não colidem
-        else: return False # não colidem porque ainda não tem almoço
-    
-    def encaixaHorario(self, hi1, hf1): #input gl.vdict['hi'][i1], gl.vdict['hf'][i1]
-        colide = False
-        for i2 in self.viags:    
-            if gl.vdict['hi'][i2]>=hi1 and gl.vdict['hi'][i2]<hf1:
-                colide = True #início da v2 está dentro da v1, mas v1 continua
-            elif hi1>=gl.vdict['hi'][i2] and hi1<gl.vdict['hf'][i2]:
-                colide = True #início da v1 está dentro da v2, mas v2 continua            
-            elif hi1 == gl.vdict['hi'][i2] or hf1 == gl.vdict['hf'][i2]: #ambas coincidem em pelo menos um horário
-                colide = True 
-        return not colide
-        
-
-"""    def encaixaHorario_old(self, i1):
-        colide = False
-        for i2 in self.viags:
-                #if gl.colideHorario(vx,vserv) == True: colide = colide + 1
-            if gl.vdict['hi'][i2]>=gl.vdict['hi'][i1] and gl.vdict['hi'][i2]<gl.vdict['hf'][i1]:
-                #logf.write("\n[ColideHorario] Caso 1 - inicio da v2 está dentro da v1, mas v1 continua")
-                colide = True #início da v2 está dentro da v1, mas v1 continua
-            
-            elif gl.vdict['hi'][i1]>=gl.vdict['hi'][i2] and gl.vdict['hi'][i1]<gl.vdict['hf'][i2]:
-                #logf.write("\n[ColideHorario] Caso 2 - inicio da v1 está dentro da v2, mas v2 continua")
-                colide = True #início da v1 está dentro da v2, mas v2 continua
-            
-            elif gl.vdict['hi'][i1] == gl.vdict['hi'][i2] or gl.vdict['hf'][i1] == gl.vdict['hf'][i2]: #ambas coincidem em pelo menos um horário
-                #logf.write("\n[ColideHorario] Caso 3 - coincidem")
-                #print(i, "| Viagens comparadas têm mesmo hi ou hf.")
-                #if vdict['ti'][i1] == vdict['ti'][i2] or vdict['tf'][i1] == vdict['tf'][i2]: #as viagens são idênticas!!!
-                    #print(i, "| Viagens comparadas têm mesmo ti ou tf")
-                colide = True 
-        return not colide
-        
-#atribuialmoço antigo:
-
-        if atribui:        
-            adicionou = False
-            i=1
-            while adicionou == False and i<len(self.viags): #se ja chegou mais ou menos no meio
-                if gl.vdict['hf'][self.viags[i-1]]+gl.almGlob < gl.vdict['hi'][self.viags[i]]: #se não colide, coloca entre viagens
-                    self.almI = gl.vdict['hf'][self.viags[i-1]]
-                    self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
-                    adicionou = True
-                i=i+1
-                
-            if adicionou == False and i == len(self.viags):
-                if self.hf()<gl.meioTab:
-                    self.almI = gl.vdict['hf'][self.viags[i-1]]
-                    self.almF = gl.vdict['hf'][self.viags[i-1]]+gl.almGlob
-                    adicionou = True
-                else:
-                    self.almF = gl.vdict['hi'][self.viags[0]]
-                    self.almI = gl.vdict['hi'][self.viags[0]] - gl.almGlob
-                    adicionou = True
-                if adicionou == False: print("Problema ao atribuir almoço.")"""

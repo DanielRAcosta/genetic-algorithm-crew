@@ -1,24 +1,28 @@
-# -*- coding: utf-8 -*-
 """
-Created on Tue Oct 15 16:26:37 2019
+Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritmo Genético
+Daniel Rodrigues Acosta
+Universidade Federal do Rio Grande do Sul
+Junho/2019
+"""
 
-@author: daniel.acosta
-"""
+import classPopulacao as pp
+
 import datetime as dtm
 import pandas as pd
-import classPopulacao as pp
-#import plotly.express as px
 import os
 
 # Caminhos das Pastas
-inputPopFolder = 'keep_20_11_3'
-outputPopFolder = 'keep_20_11_4'
+inputPopFolder = '23'
+outputPopFolder = '50'
+folder = "C:\\Users\\"+ os.getlogin() +"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
+inputViags = folder + "v_input.csv"
 
-modo_inicio = 0     # 0 = do zero                       1 = ler do binário
-modo_fim = 0        # 0 = até iAlg=alg                  1 = até ter nCompl soluções completas 
-modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
+# Controle macro
 alg = 10000             # n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
-nCompl = 30         #nº soluções completas exigidas para que o algoritmo pare
+modo_inicio =0     # 0 = do zero                       1 = ler do binário
+modo_fim = 1        # 0 = até iAlg=alg                  1 = até ter nCompl soluções completas 
+modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
+nCompl = 10         #nº soluções completas exigidas para que o algoritmo pare
 carregaPais = 0     #se pais dos cruzamentos devem ser adicionados a C
 
 # Pesos dos custos
@@ -27,15 +31,16 @@ delta = 0.5
 tau = 1.5
 gama = 3.5 
 probMaiorCusto = 0.08
+
+# Populações e Probabilidades
+fs = 0.3        #fator de seleção ()   
+pm = 0.1        #probabilidade de mutação
 probAlm = 0.5
 probMutNeg = 0.9
-algMutNeg = 0.8
+algMutNeg = 1
 
-# Populações
-fs = 0.2        #fator de seleção ()   
 na = 10         #número de soluções na população A
 nb = 5         #número de soluções na população B
-pm = 0.2        #probabilidade de mutação
 nCruz = 1       #nº soluções filhas adicionadas no cruzamento
 fatorTop = 0.3  #nº soluções que sobrevivem na seleção Deterministica final
 fatorRol = 0.3  #nº soluções que sobrevivem na seleção Roleta final
@@ -48,13 +53,13 @@ intervPontaGlob = dtm.timedelta(hours=0.5)
 minInicAlm = dtm.timedelta(hours=2.5)
 maxFimAlm = dtm.timedelta(hours=1)
 
-user = os.getlogin()
-folder = "C:\\Users\\"+ user+"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
-#folder = os.getcwd()+'\\'
-inputViags = folder + "v_input.csv"
-logf = open(folder + "output\\logfile.txt", 'w')
-wrRoleta = open(folder + "output\\wrRoletaCA.txt", 'w')
-sols = open(folder+ "output\\solucoes.txt",'w')
+# Inputs e Outputs
+if not os.path.exists(folder + "output\\"): os.mkdir(folder + "output\\")
+if not os.path.exists(folder + "output\\"+outputPopFolder +"\\"): os.mkdir(folder + "output\\"+outputPopFolder +"\\")
+if not os.path.exists(folder+"output\\img"): os.mkdir(folder+"output\\img")
+fileConv = folder+ "output\\"+outputPopFolder+"\\convergencia.txt"
+if os.path.exists(fileConv): os.remove(fileConv) # não deixar que o txt da convergencia seja reescrito
+
 
 # Contadores
 if modo_inicio==0:
@@ -62,12 +67,11 @@ if modo_inicio==0:
     popCompl = pp.Populacao(nCompl, 'f') # População para guardar Soluções Completas
 elif modo_inicio==1:
     idsolGlob = pp.inpop('id')
-    popCompl = pp.inpop('f') # População para guardar Soluções Completas
+    popCompl = pp.inpop('f') # População para guardar Soluções Completas - herdada do pickle
+    #popCompl = pp.Populacao(nCompl, 'f') # População para guardar Soluções Completas - não herdada
 popQuase = pp.Populacao(10, 'q')
 custosIguais = 0
 solCompl = 0
-
-#%%
 
 ### LEITURA DO ARQUIVO DE INPUT ############
 dfv = pd.read_csv(inputViags, sep=';', index_col=0) 
@@ -105,7 +109,7 @@ for i in range(0,len(dfv)):             # Confusão absurda pra colocar a data n
     dfv.iloc[i,3]=dtm.datetime(2019,6,diaf,int(dfv.iloc[i,3][0:2]),int(dfv.iloc[i,3][3:5]),0)
     dfv.iloc[i,6]=dfv.iloc[i,3]-dfv.iloc[i,2] 
 
-# PESO HORARIO DE PICO
+### PESO HORARIO DE PICO ###########
 start = min(dfv['hi'])
 end = max(dfv['hf'])          
 
@@ -130,9 +134,6 @@ for j in range(0,len(dfv)):
             
 dfv.drop(columns="tab", inplace=True)   # excluir a coluna tab, porque aparentemente não vai mais ser necessário.
 
-
-#%%
-
 vdict = dfv.to_dict()
 nc = round(fs*na*(len(vdict['hi'])+na+nb))       #número de soluções na população C
 dursViags = list(vdict['dur'].values())
@@ -140,24 +141,3 @@ durMediaViags = sum(dursViags, dtm.timedelta(0))/len(dursViags)
 hmus = almGlob + dtm.timedelta(hours=1) # 2h de intervalos (30min / 1h / 30min) - estimativa da folga mínima que se pode alcançar em um serviço
 viagsPorServ = (jornGlob-hmus) / durMediaViags 
 meioTab = min(vdict['hi'].values()) + (max(vdict['hf'].values())-min(vdict['hi'].values()))/2
-
-
-"""
-def old_colideHorario(i1,i2):    #funçao que testa se o horario das viagens colide (condiçao 1)   
-    if vdict['hi'][i2]>=vdict['hi'][i1] and vdict['hi'][i2]<vdict['hf'][i1]:
-        #logf.write("\n[ColideHorario] Caso 1 - inicio da v2 está dentro da v1, mas v1 continua")
-        return True #início da v2 está dentro da v1, mas v1 continua
-    
-    elif vdict['hi'][i1]>=vdict['hi'][i2] and vdict['hi'][i1]<vdict['hf'][i2]:
-        #logf.write("\n[ColideHorario] Caso 2 - inicio da v1 está dentro da v2, mas v2 continua")
-        return True #início da v1 está dentro da v2, mas v2 continua
-    
-    elif vdict['hi'][i1] == vdict['hi'][i2] or vdict['hf'][i1] == vdict['hf'][i2]: #ambas coincidem em pelo menos um horário
-        #logf.write("\n[ColideHorario] Caso 3 - coincidem")
-        #print(i, "| Viagens comparadas têm mesmo hi ou hf.")
-        #if vdict['ti'][i1] == vdict['ti'][i2] or vdict['tf'][i1] == vdict['tf'][i2]: #as viagens são idênticas!!!
-            #print(i, "| Viagens comparadas têm mesmo ti ou tf")
-        return True 
-    else: return False #viagens não colidem   
-    
-"""
