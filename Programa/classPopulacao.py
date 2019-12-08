@@ -84,6 +84,13 @@ class Populacao:
         duplicatas = [key for key in self.sols if self.sols[key].idsol in idsols]
         nlist = [key for key in self.sols if self.sols not in duplicatas]
         return self.Roleta(n, nlist)
+    
+    def selecFinal(self): #talvez seja útil mas nessa etapa é bom um olhar humano
+        if len(self.sols)>0:
+            idSols = [idsol for idsol in self.sols if len(self.sols[idsol].viagSol) == len(gl.vdict['hi'])]
+            idSols.sort(key=lambda idsol: self.sols[idsol].custo())
+            return idSols[0]
+        else: pass # o que fazer quando for uma população vazia pra nao estragar na hora de fazer a comparaçao?
 
     ### PRINTS ######
     
@@ -91,8 +98,8 @@ class Populacao:
     
     def sizeServSol(self): return [len(self.sols[iSol].servs) for iSol in self.sols]
     
-    def gantt(self, iAlg):
-        for sol in self.sols: self.sols[sol].gantt(iAlg, self.nome)
+    def gantt(self, outputPopFolder):
+        for sol in self.sols: self.sols[sol].gantt(outputPopFolder, self.nome)
 
 # FUNÇÕES PICKLE - precisam agir fora da classe População
 
@@ -101,8 +108,8 @@ def inpop(nome):
     return pk.load(pkfile)
     pkfile.close()
     
-def outpop(pop, nome):
-    pasta = gl.folder+'output\\'+gl.outputPopFolder
+def outpop(pop, nome, outputPopFolder):
+    pasta = gl.folder+'output\\'+outputPopFolder
     if not os.path.exists(pasta): os.mkdir(pasta)
     nomefile = pasta+'\\pop_'+nome+'.txt'
     if os.path.exists(nomefile): os.remove(nomefile)

@@ -13,17 +13,18 @@ import os
 
 # Caminhos das Pastas
 inputPopFolder = '23'
-outputPopFolder = '50'
 folder = "C:\\Users\\"+ os.getlogin() +"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
 inputViags = folder + "v_input.csv"
 
 # Controle macro
 alg = 10000             # n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
 modo_inicio =0     # 0 = do zero                       1 = ler do binário
-modo_fim = 1        # 0 = até iAlg=alg                  1 = até ter nCompl soluções completas 
+modo_fim = 2        # 0 = até iAlg=alg                  1 = até ter nCompl soluções completas     2 = até ter completas e tentar algumas
 modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
 nCompl = 10         #nº soluções completas exigidas para que o algoritmo pare
 carregaPais = 0     #se pais dos cruzamentos devem ser adicionados a C
+tryCompl = 50
+gotCompl = 0
 
 # Pesos dos custos
 alfa = 1.5
@@ -55,11 +56,7 @@ maxFimAlm = dtm.timedelta(hours=1)
 
 # Inputs e Outputs
 if not os.path.exists(folder + "output\\"): os.mkdir(folder + "output\\")
-if not os.path.exists(folder + "output\\"+outputPopFolder +"\\"): os.mkdir(folder + "output\\"+outputPopFolder +"\\")
 if not os.path.exists(folder+"output\\img"): os.mkdir(folder+"output\\img")
-fileConv = folder+ "output\\"+outputPopFolder+"\\convergencia.txt"
-if os.path.exists(fileConv): os.remove(fileConv) # não deixar que o txt da convergencia seja reescrito
-
 
 # Contadores
 if modo_inicio==0:
@@ -141,3 +138,4 @@ durMediaViags = sum(dursViags, dtm.timedelta(0))/len(dursViags)
 hmus = almGlob + dtm.timedelta(hours=1) # 2h de intervalos (30min / 1h / 30min) - estimativa da folga mínima que se pode alcançar em um serviço
 viagsPorServ = (jornGlob-hmus) / durMediaViags 
 meioTab = min(vdict['hi'].values()) + (max(vdict['hf'].values())-min(vdict['hi'].values()))/2
+

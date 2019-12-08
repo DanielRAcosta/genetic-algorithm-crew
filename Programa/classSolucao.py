@@ -200,7 +200,7 @@ class Solucao:
 
     ### PRINTS ######
         
-    def gantt(self, iAlg, popname):
+    def gantt(self, outputPopFolder, popname):
         df = []
         ids = list(self.servs)
         ids.sort(key= lambda idserv: self.servs[idserv].jornI())
@@ -211,8 +211,8 @@ class Solucao:
             df.append(dict(Task=str(serv), Start =self.servs[serv].jornF()-gl.intervPontaGlob, Finish=self.servs[serv].jornF(), Resource='Recolhe'))
             #df.append(dict(Task=str(serv), Start =self.servs[serv].jornI()+gl.intervPontaGlob, Finish=self.servs[serv].jornF()-gl.intervPontaGlob, Resource='Jornada'))
         
-        titulo = "["+str(iAlg)+"] pop"+popname+" - Sol "+str(self.idsol)+" - nViags "+str(len(self.viagSol))+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])+" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"
+        titulo = "["+str(outputPopFolder)+"] pop"+popname+" - Sol "+str(self.idsol)+" - nViags "+str(len(self.viagSol))+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])+" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"
         colors = dict(Viagens='rgb(219,0,0)', Almoço=(0.95,0.9,0.17), Recolhe='rgb(150,0,150)',Jornada='rgb(255,255,255)')
         
         fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True, group_tasks=True, title=titulo)
-        fig.write_image(gl.folder+"output\\img\\"+str(iAlg)+"_pop"+popname+"_"+str(self.idsol)+".png")
+        fig.write_image(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\"+str(outputPopFolder)+"_pop"+popname+"_"+str(self.idsol)+".png")

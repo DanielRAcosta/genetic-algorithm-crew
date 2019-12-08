@@ -16,17 +16,7 @@ import numpy as np
 import pandas as pd
 import math
 import datetime
-
-def guardaExecucao():
-    global popA
-    global popB
-    global popC
-
-    pp.outpop(popA, 'a')    
-    pp.outpop(popB, 'b')    
-    pp.outpop(popC, 'c')    
-    pp.outpop(gl.popCompl, 'f')
-    pp.outpop(gl.idsolGlob, 'id')
+import os
     
 def plot_conv():
     fileConv= open(gl.folder+ "output\\"+gl.outputPopFolder+"\\convergencia.txt")
@@ -36,7 +26,21 @@ def plot_conv():
     figconv = px.scatter(x=xplot, y=yplot)
     figconv.show()
     
-def principal():
+def guardaExecucao(popA,popB,popC, outputPopFolder):
+    pp.outpop(popA, 'a', outputPopFolder)    
+    pp.outpop(popB, 'b', outputPopFolder)    
+    pp.outpop(popC, 'c', outputPopFolder)    , outputPopFolder, outputPopFolder
+    pp.outpop(gl.popCompl, 'f', outputPopFolder)
+    pp.outpop(gl.popQuase, 'q', outputPopFolder)
+    pp.outpop(gl.idsolGlob, 'id', outputPopFolder)
+    
+def outConv(fileConv, sol, iAlg):
+    # convergencia.txt
+    conv = open(fileConv, 'a')
+    conv.write('\n'+str(iAlg)+','+str(sol.idsol)+','+str(len(sol.viagSol))+','+str(len(sol.servs))+','+str(sol.custo().total_seconds())+','+str(sol.custog().total_seconds())+','+str(sol.custoh().total_seconds()))
+    conv.close()
+
+def principal(iAlg,popA,popB,popC, outputPopFolder):
     popC.sols.clear() #esvazia B para recomeçar
     
     ### CRUZAMENTO ############
@@ -110,60 +114,101 @@ def principal():
     ### SAÍDA DE DADOS #####
 
     print(iAlg, popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol()) # plota na tela o número máximo de viagens
-
-    # convergencia.txt
-    best = popB.selecDet(1,[])[0]
-    conv = open(gl.fileConv, 'a')
-    conv.write('\n'+str(iAlg)+','+str(popB.sols[best].idsol)+','+str(len(popB.sols[best].viagSol))+','+str(len(popB.sols[best].servs))+','+str(popB.sols[best].custo().total_seconds())+','+str(popB.sols[best].custog().total_seconds())+','+str(popB.sols[best].custoh().total_seconds()))
-    conv.close()
          
     if float(iAlg/30).is_integer(): # a cada 30 iterações
         gl.popQuase.excluiDet()
-        if gl.modo_salva == 1: guardaExecucao()
+        if gl.modo_salva == 1: guardaExecucao(popA,popB,popC, outputPopFolder)
+        
+    if max(max(popA.sizeViagSol()),max(popB.sizeViagSol()),max(popC.sizeViagSol())) == len(gl.vdict['hi']):
+        gl.gotCompl = gl.gotCompl + 1
+        
+    return popA,popB,popC
        
 #### EXECUÇÃO DO ALGORITMO ####
 
-# Inicialização
-algStart = datetime.datetime.now()
-
-# inicializa plot convergência
-conv = open(gl.fileConv, 'w')
-conv.write("\niAlg,idSol mais barata,nViagens,nServs,custo,custoG,custoH")
-conv.close()
-                  
-if gl.modo_inicio == 0:
-    popA = pp.Populacao(gl.na, 'A')
-    popB = pp.Populacao(gl.nb, 'B')
-    popC = pp.Populacao(gl.nc, 'C')
+def prog(iExec):
     
-    randlist = [] 
-    for i in range(gl.na): # CRIA grupo de soluções iniciais A a partir de E - input = leitura de vdict, n populacao A (gl.na)
-        vx = rd.randrange(1,len(gl.vdict['hi'])+1)
-        while vx in randlist: vx = rd.randrange(1,len(gl.vdict['hi'])+1)
-        randlist.append(vx)
-        
-    for vx in randlist: popA.addSol(sl.Solucao(sv.Servico(vx), [0,0]))
-        
-elif gl.modo_inicio == 1:
-    popA = pp.inpop('A')
-    popB = pp.inpop('B')
-    popC = pp.Populacao(gl.nc, 'C')
-    gl.logf.write("\npopA e popB obtidas do pickle.")
-
-### EXECUTA LAÇO PRINCIPAL ###
-if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
-    for iAlg in range(1,gl.alg+1):
-        principal()  
-        
-elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
-    iAlg = 0  
-    gl.solCompl = 0
-    while gl.solCompl < gl.nCompl:
-        iAlg = iAlg +1
-        principal()
-        
-# Finalização
-# guarda as populações num arquivo pickle para usar depois
-if gl.modo_salva == 1: guardaExecucao()
+    outputPopFolder = str(iExec)
+    if not os.path.exists(gl.folder + "output\\"+outputPopFolder +"\\"): os.mkdir(gl.folder + "output\\"+outputPopFolder +"\\")
+    if not os.path.exists(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\"): os.mkdir(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\")
+    fileConv = gl.folder+ "output\\"+outputPopFolder+"\\convergencia.txt"
+    fileAtrib = gl.folder+ "output\\"+outputPopFolder+"\\atributos.txt"
+    if os.path.exists(fileConv): os.remove(fileConv) # não deixar que o txt da convergencia seja reescrito
+    if os.path.exists(fileAtrib): os.remove(fileAtrib) # não deixar que o txt da convergencia seja reescrito
     
-algEnd = datetime.datetime.now()
+    # Inicialização
+    algStart = datetime.datetime.now()
+    
+    # inicializa plot convergência
+    conv = open(fileConv, 'w')
+    conv.write("\niAlg,idSol mais barata,nViagens,nServs,custo,custoG,custoH")
+    conv.close()
+    
+    # inicializa arquivo atributos
+    atrib = open(fileAtrib, 'w')
+    atrib.write(str(algStart))
+    atrib.close()
+                      
+    if gl.modo_inicio == 0:
+        popA = pp.Populacao(gl.na, 'A')
+        popB = pp.Populacao(gl.nb, 'B')
+        popC = pp.Populacao(gl.nc, 'C')
+        
+        randlist = [] 
+        for i in range(gl.na): # CRIA grupo de soluções iniciais A a partir de E - input = leitura de vdict, n populacao A (gl.na)
+            vx = rd.randrange(1,len(gl.vdict['hi'])+1)
+            while vx in randlist: vx = rd.randrange(1,len(gl.vdict['hi'])+1)
+            randlist.append(vx)
+            
+        for vx in randlist: popA.addSol(sl.Solucao(sv.Servico(vx), [0,0]))
+            
+    elif gl.modo_inicio == 1:
+        popA = pp.inpop('A')
+        popB = pp.inpop('B')
+        popC = pp.Populacao(gl.nc, 'C')  
+    
+    
+    ### EXECUTA LAÇO PRINCIPAL ###
+    if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
+        for iAlg in range(1,gl.alg+1):
+            popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
+            outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
+            
+    elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
+        iAlg = 0  
+        gl.solCompl = 0
+        while gl.solCompl < gl.nCompl:
+            iAlg = iAlg +1
+            popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
+            outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
+    elif gl.modo_fim ==2:
+        iAlg = 0  
+        gl.solCompl = 0
+        gl.gotCompl = 0
+        while gl.gotCompl < gl.tryCompl:
+            iAlg = iAlg +1
+            popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
+            outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
+            
+    # Finalização
+    # guarda as populações num arquivo pickle para usar depois
+    if gl.modo_salva == 1: guardaExecucao(popA,popB,popC, outputPopFolder)
+    # anota atributos restantes
+    algEnd = datetime.datetime.now()
+    atrib = open(fileAtrib, 'w')
+    atrib.write(str(gl.gotCompl)+str(iAlg)+str(algEnd)+str(algEnd-algStart))
+    #escrever ate qual iteração foi
+    atrib.close()
+    
+    # plotar todos os gantts
+    popA.gantt(outputPopFolder)
+    popB.gantt(outputPopFolder)
+    popC.gantt(outputPopFolder)
+    if len(gl.popCompl.sols)>0 :gl.popCompl.gantt(outputPopFolder)
+    if len(gl.popQuase.sols)>0 :gl.popQuase.gantt(outputPopFolder)
+    
+    # plotar melhor gantt dessa execução
+    # ainda não é bom sem a supervisao humana
+    #idBest = [popA.selecFinal(), popA.selecFinal(),popA.selecFinal(),popA.selecFinal(),popA.selecFinal()]
+
+    
