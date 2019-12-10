@@ -93,19 +93,19 @@ class Solucao:
             if self.servs[j].cabeJornada(vx): #não extrapola a soma de tempos 
                 
                 if self.servs[j].almI == None: # falta atribuir almoço?
-                    if len(self.servs[j].viags)>gl.minViagAlm: # só se tiver no min duas viagens
+                    if len(self.servs[j].viags)>gl.minViagAlm:#and rd.random()<gl.probAlm: # só se tiver no min duas viagens
                         self.servs[j].tentaAtribuirAlmoco()
                 
                 if self.servs[j].encaixaTerminal(vx): #terminais compativeis de bairro e centro
                     if self.servs[j].encaixaHorario(gl.vdict['hi'][vx],gl.vdict['hf'][vx]): #nao colide com nenhuma viagem  
                         if self.servs[j].colideAlmoco(vx): # se colide almoço
-                            pass # melhoria futura: almoço flexível com a entrada da viagem
-                            #if self.servs[j].encaixaViagAlmoco(vx): # tenta mesmo assim arrastar o almoço pro lado... se der add vx
-                             #   self.servs[j].viags.append(vx)
-                              #  self.servs[j].sortV()
-                               # self.viagSol.append(vx)
-                                #self.sortV()
-                                #adicionou = True
+                            # melhoria futura: almoço flexível com a entrada da viagem
+                            if self.servs[j].encaixaViagAlmoco(vx): # tenta mesmo assim arrastar o almoço pro lado... se der add vx
+                                self.servs[j].viags.append(vx)
+                                self.servs[j].sortV()
+                                self.viagSol.append(vx)
+                                self.sortV()
+                                adicionou = True
                         
                         else: # se não colide
                             self.servs[j].viags.append(vx)
