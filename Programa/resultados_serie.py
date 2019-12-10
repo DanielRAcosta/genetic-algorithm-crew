@@ -7,6 +7,7 @@ Junho/2019
 
 import programa as prog
 
-nExec = 3
+#nExec = 1
+#for iExec in range(nExec): prog.prog(iExec)
 
-for iExec in range(nExec): prog.prog(iExec)
+prog.prog(15)

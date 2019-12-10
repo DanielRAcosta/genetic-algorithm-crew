@@ -1,3 +1,4 @@
+
 """
 Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritmo Genético
 Daniel Rodrigues Acosta
@@ -13,8 +14,9 @@ import os
 
 # Caminhos das Pastas
 inputPopFolder = '23'
+linha = '165'
 folder = "C:\\Users\\"+ os.getlogin() +"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
-inputViags = folder + "v_input.csv"
+inputViags = folder + "v_input_"+linha+".csv"
 
 # Controle macro
 alg = 10000             # n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
