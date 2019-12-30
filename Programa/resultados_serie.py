@@ -10,4 +10,4 @@ import programa as prog
 #nExec = 1
 #for iExec in range(nExec): prog.prog(iExec)
 
-prog.prog(15)
+prog.prog(99)

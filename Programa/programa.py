@@ -9,23 +9,14 @@ import variaveisGlobais as gl
 import classServico as sv
 import classSolucao as sl
 import classPopulacao as pp
+import plot
 
-import plotly.express as px
 import random as rd
 import numpy as np
-import pandas as pd
 import math
 import datetime
 import os
-    
-def plot_conv():
-    fileConv= open(gl.folder+ "output\\"+gl.outputPopFolder+"\\convergencia.txt")
-    dfconv = pd.read_csv(fileConv, sep=',')
-    xplot = list(dfconv['iAlg']) + list(dfconv['iAlg']) + list(dfconv['iAlg'])
-    yplot = list(dfconv['custo'])+ list(dfconv['custoG'])+list(dfconv['custoH'])
-    figconv = px.scatter(x=xplot, y=yplot)
-    figconv.show()
-    
+       
 def guardaExecucao(popA,popB,popC, outputPopFolder):
     pp.outpop(popA, 'a', outputPopFolder)    
     pp.outpop(popB, 'b', outputPopFolder)    
@@ -91,7 +82,7 @@ def principal(iAlg,popA,popB,popC, outputPopFolder):
     # EXCLUI deterministicamente/roleta as piores dos grupos constantes popA, popB e popCompletas
     popA.excluiRol()
     popB.excluiRol()
-    gl.popCompl.excluiRol()
+    gl.popQuase.excluiRol()
     
     ### MUTAÇÃO ############    
     for iSol in popC.sols: # mutação in-place
@@ -113,7 +104,7 @@ def principal(iAlg,popA,popB,popC, outputPopFolder):
     
     ### SAÍDA DE DADOS #####
 
-    print(iAlg, popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol()) # plota na tela o número máximo de viagens
+    print(iAlg, len(gl.popCompl.sols), popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol()) # plota na tela o número máximo de viagens
          
     if float(iAlg/30).is_integer(): # a cada 30 iterações
         gl.popQuase.excluiDet()
@@ -127,6 +118,9 @@ def principal(iAlg,popA,popB,popC, outputPopFolder):
 #### EXECUÇÃO DO ALGORITMO ####
 
 def prog(iExec):
+    global popA
+    global popB
+    global popC
     
     outputPopFolder = str(iExec)
     if not os.path.exists(gl.folder + "output\\"+outputPopFolder +"\\"): os.mkdir(gl.folder + "output\\"+outputPopFolder +"\\")
@@ -150,6 +144,7 @@ def prog(iExec):
     atrib.close()
                       
     if gl.modo_inicio == 0:
+
         popA = pp.Populacao(gl.na, 'A')
         popB = pp.Populacao(gl.nb, 'B')
         popC = pp.Populacao(gl.nc, 'C')
@@ -161,19 +156,16 @@ def prog(iExec):
             randlist.append(vx)
             
         for vx in randlist: popA.addSol(sl.Solucao(sv.Servico(vx), [0,0]))
-            
     elif gl.modo_inicio == 1:
         popA = pp.inpop('A')
         popB = pp.inpop('B')
         popC = pp.Populacao(gl.nc, 'C')  
-    
     
     ### EXECUTA LAÇO PRINCIPAL ###
     if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
         for iAlg in range(1,gl.alg+1):
             popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
             outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
-            
     elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
         iAlg = 0  
         gl.solCompl = 0
@@ -181,7 +173,7 @@ def prog(iExec):
             iAlg = iAlg +1
             popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
             outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
-    elif gl.modo_fim ==2:
+    elif gl.modo_fim ==2: # modo 2 - itera até atingir alguma completa e tentar tryCompl iterações
         iAlg = 0  
         gl.solCompl = 0
         gl.gotCompl = 0
@@ -207,6 +199,9 @@ def prog(iExec):
     if len(gl.popCompl.sols)>0 :gl.popCompl.gantt(outputPopFolder)
     if len(gl.popQuase.sols)>0 :gl.popQuase.gantt(outputPopFolder)
     
+    plot.conv(iExec)
+    
+prog(16502)
     # plotar melhor gantt dessa execução
     # ainda não é bom sem a supervisao humana
     #idBest = [popA.selecFinal(), popA.selecFinal(),popA.selecFinal(),popA.selecFinal(),popA.selecFinal()]

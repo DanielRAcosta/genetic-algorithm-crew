@@ -182,7 +182,24 @@ class Servico:
                 self.almF = self.almI + gl.almGlob
                 adicionou = True
         return adicionou
-                
-#    def encaixaViagAlmoco(self, vx): #retorna True ou False se dá pra empurrar o almoço pro lado e mesmo assim alocar a viagem.
+    
+    def encaixaViagAlmoco(self, vx): #retorna True ou False se dá pra empurrar o almoço pro lado e mesmo assim alocar a viagem.
+        hf_anteriores = [gl.vdict['hf'][idv] for idv in self.viags if gl.vdict['hf'][idv] < self.almI]
+        hi_posteriores = [gl.vdict['hi'][idv] for idv in self.viags if gl.vdict['hi'][idv] > self.almF]
+        try:
+            inicFolga = hf_anteriores.sort(reverse=True)[0]
+            fimFolga = hi_posteriores.sort()        
+            
+            if gl.almGlob + dtm.timedelta(minutes = 5) <= fimFolga-gl.vdict['hf'][vx]: # cabe depois
+                self.almI = gl.vdict['hf'][vx] + dtm.timedelta(minutes = 2)
+                self.almF = self.almI + gl.almGlob
+                return True
+            elif gl.almGlob  + dtm.timedelta(minutes = 5) <= gl.vdict['hi'][vx] - inicFolga: # cabe antes
+                self.almF = gl.vdict['hf'][vx] - dtm.timedelta(minutes = 2)
+                self.almI = self.almF - gl.almGlob
+                return True
+            else: return False
+        except: return False
+        
         """se der True, alteração do almoço deve ser feita aqui e a da viagem fora"""
     

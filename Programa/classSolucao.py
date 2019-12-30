@@ -12,6 +12,7 @@ import plotly.figure_factory as ff
 import datetime as dtm
 import random as rd
 import numpy as np
+import math
 import copy
 
 class Solucao:
@@ -43,23 +44,37 @@ class Solucao:
                 self.servs[serv].tentaAtribuirAlmoco()
             if self.servs[serv].almI==None:    
                 ok = self.servIncompleto(serv, ok)
-        
-        ids = list(self.servs)
-        for serv in ids: #ALMOÇO EM HORARIO RUIM? - essa função está muito rígida
-            if self.servs[serv].hi() + gl.minInicAlm + gl.intervPontaGlob > self.servs[serv].almI or self.servs[serv].hf() - gl.maxFimAlm - gl.intervPontaGlob <self.servs[serv].almF:
-                ok = self.servIncompleto(serv, ok)
                 
+        ids = list(self.servs)
+        for serv in ids: #ALMOÇO NA EXTREMIDADE?
+            if self.servs[serv].hi() == self.servs[serv].almI or self.servs[serv].hf() == self.servs[serv].almF:
+                self.servs[serv].almI = None
+                self.servs[serv].almF = None
+                self.servs[serv].tentaAtribuirAlmoco()
+                
+            if self.servs[serv].hi() == self.servs[serv].almI or self.servs[serv].hf() == self.servs[serv].almF:
+                ok = self.servIncompleto(serv, ok)
+
         ids = list(self.servs)
         for serv in ids: #POUCAS VIAGENS?
-            if len(self.servs[serv].viags) < round(gl.viagsPorServ/2) -1:
+            if len(self.servs[serv].viags) < round(gl.viagsPorServ*gl.fatorMinServ):
                 ok = self.servIncompleto(serv, ok)
+            
+        #ids = list(self.servs)
+        #for serv in ids: #ALMOÇO EM HORARIO RUIM? - essa função está muito rígida
+        #    if self.servs[serv].hi() + gl.minInicAlm + gl.intervPontaGlob > self.servs[serv].almI or self.servs[serv].hf() - gl.maxFimAlm - gl.intervPontaGlob <self.servs[serv].almF:
+        #        ok = self.servIncompleto(serv, ok)
                 
-        if ok:
+        if ok: # se passou todas, dale!
             if gl.popCompl.addSolCheck(self.geraCopia()): #é adicionada uma cópia aqui, que vai ficar intocada. se deu True, adicionou
                 gl.solCompl = gl.solCompl +1
                 print("######################")
                 print(gl.solCompl, " - Uma solução completa foi atingida. Cópia armazenada em popCompl.")
-
+        else: # se deu alguma treta, deleta uma porcentagem dos restantes
+            for i in range(0,math.ceil(len(self.servs)*gl.fatorDelServ)):
+                serv = np.random.choice(list(self.servs), size=1, replace=False)[0]
+                self.servIncompleto(serv, ok)
+            
     def geraCopia(self):
         serv0filho = sv.Servico(0)
         idZero = list(self.servs.keys())[0]
@@ -93,7 +108,7 @@ class Solucao:
             if self.servs[j].cabeJornada(vx): #não extrapola a soma de tempos 
                 
                 if self.servs[j].almI == None: # falta atribuir almoço?
-                    if len(self.servs[j].viags)>gl.minViagAlm: # só se tiver no min duas viagens
+                    if len(self.servs[j].viags)>gl.minViagAlm and rd.random()<gl.probAlm: # só se tiver o min de viagens
                         self.servs[j].tentaAtribuirAlmoco()
                 
                 if self.servs[j].encaixaTerminal(vx): #terminais compativeis de bairro e centro
@@ -148,14 +163,18 @@ class Solucao:
             #else: print("Solução Pai2 só tem viagens que já estão em Pai1, mas não está completa.")
         
     def muta(self):            #realiza mutação na solução atual. a aleatoriedade está fora dessa função, no bloco do código.
-        if len(self.viagSol)<gl.algMutNeg*len(gl.vdict['hi']): self.mutaAdd()
-        elif rd.random()<gl.probMutNeg: self.mutaDel()
-        elif len(self.viagSol)<len(gl.vdict['hi']): self.mutaAdd()
+        #if len(self.viagSol)<gl.algMutNeg*len(gl.vdict['hi']): self.mutaAdd()
+        #elif rd.random()<gl.probMutNeg: self.mutaDel()
+        #elif len(self.viagSol)<len(gl.vdict['hi']): self.mutaAdd()
         #else: solução na fase final do algoritmo, que não foi sorteada pra retirar viagem e que não pode receber viagem pois é completa
+        self.mutaAdd() #desativei mutação negativa um pouco.
             
     def mutaAdd(self):
         vx = self.viagNovaRandom()
-        adicionou = self.encaixaVSol(vx)
+        if vx == False:
+            adicionou = False
+        else:
+            adicionou = self.encaixaVSol(vx)
         if adicionou == False: print("ERRO ESTRANHÍSSIMO AO ENCAIXAR VIAGEM NA SOLUÇÃO")
         
     def mutaDel(self):
