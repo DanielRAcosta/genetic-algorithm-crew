@@ -34,12 +34,15 @@ def folgas(iExec, pop):
         folgas = []
         ids = list(pop.sols[sol].servs)
         ids.sort(key= lambda idserv: pop.sols[sol].servs[idserv].jornI())
-        for serv in ids: folgas.append(pop.sols[sol].servs[serv].folgaE().total_seconds() + pop.sols[sol].servs[serv].folgaI().total_seconds())
-
-        # salva em txt
         folg.write("\nSolução "+str(pop.sols[sol].idsol))
-        folg.write("\nidserv;folgaTotal")
-        for i in len(ids): folg.write("\n"+str(ids[i])+";"+str(folgas[i]))
+        try:
+            for serv in ids: folgas.append(pop.sols[sol].servs[serv].folgaE().total_seconds() + pop.sols[sol].servs[serv].folgaI().total_seconds())
+            # salva em txt
+            folg.write("\nidserv;folgaTotal")
+            for i in len(ids): folg.write("\n"+str(ids[i])+";"+str(folgas[i]))
+        except:
+            folg.write("\nidserv;folgaTotal")
+            folg.write("\n"+str(ids[0])+";"+str(pop.sols[sol].servs[ids[0]].folgaE().total_seconds() + pop.sols[sol].servs[ids[0]].folgaI().total_seconds()))
         
         # plota em imagem
         #figfolgas = px.scatter(x=xplot, y=yplot)

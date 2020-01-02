@@ -94,9 +94,13 @@ class Populacao:
 
     ### PRINTS ######
     
-    def sizeViagSol(self): return [len(self.sols[iSol].viagSol) for iSol in self.sols]
+    def sizeViagSol(self):
+        sizes = [len(self.sols[iSol].viagSol) for iSol in self.sols]
+        return str(max(sizes))+"/"+str(min(sizes))
     
-    def sizeServSol(self): return [len(self.sols[iSol].servs) for iSol in self.sols]
+    def sizeServSol(self):
+        sizes = [len(self.sols[iSol].servs) for iSol in self.sols]
+        return str(max(sizes))+"/"+str(min(sizes))
     
     def gantt(self, outputPopFolder):
         for sol in self.sols: self.sols[sol].gantt(outputPopFolder, self.nome)

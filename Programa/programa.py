@@ -99,7 +99,8 @@ def principal(popA,popB,popC, outputPopFolder):
     
     ### SAÍDA DE DADOS #####
 
-    print(gl.igl, len(gl.popCompl.sols), popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol()) # plota na tela o número máximo de viagens
+    
+    print(gl.igl, ' | ',len(gl.popCompl.sols),' completas | A =', popA.sizeViagSol(), ' | B = ',popB.sizeViagSol(), ' | C = ',popC.sizeViagSol(), ' | Restam ', len(gl.vdict['hi']) - max([len(popB.sols[iSol].viagSol) for iSol in popB.sols]), ' viagens')# plota na tela o número máximo de viagens
          
     if float(gl.igl/30).is_integer(): # a cada 30 iterações
         gl.popQuase.excluiDet()
@@ -117,7 +118,7 @@ def prog(iExec):
     global popB
     global popC
 
-    algStart = datetime.datetime.now() # Horário de Inicialização
+    gl.algStart = datetime.datetime.now() # Horário de Inicialização
     
     # Outputs de Convergência e de Atributos
     outputPopFolder = str(iExec)
@@ -135,7 +136,7 @@ def prog(iExec):
     conv = open(fileConv, 'w')
     atrib = open(fileAtrib, 'w')
     conv.write("\nhorario;iAlg;idSol mais barata;nViagens;nServs;custo;custoG;custoH")    
-    atrib.write(str(algStart))
+    atrib.write(str(gl.algStart))
     conv.close()
     atrib.close()
 
@@ -187,7 +188,7 @@ def prog(iExec):
     
     algEnd = datetime.datetime.now() # Horário de Finalização
     atrib = open(fileAtrib, 'w')
-    atrib.write(str(gl.gotCompl)+str(gl.igl)+str(algEnd)+str(algEnd-algStart))  # Armazenar até qual iteração foi e quantas completas
+    atrib.write(str(gl.gotCompl)+str(gl.igl)+str(algEnd)+str(algEnd-gl.algStart))  # Armazenar até qual iteração foi e quantas completas
     atrib.close()
     
     # plotar todos os gantts
@@ -200,6 +201,6 @@ def prog(iExec):
     #plot.conv(iExec)
     plot.folgas(iExec, gl.popCompl)
     
-prog(16502)
+prog(20)
 
     

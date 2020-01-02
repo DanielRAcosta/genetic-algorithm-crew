@@ -23,7 +23,7 @@ alg = 10000             # n° iterações do algoritmo (usar enquanto eu não es
 modo_inicio =0     # 0 = do zero                       1 = ler do binário
 modo_fim = 1        # 0 = até igl=alg                  1 = até ter nCompl soluções completas     2 = até ter completas e tentar algumas
 modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
-nCompl = 10         #nº soluções completas exigidas para que o algoritmo pare
+nCompl = 5         #nº soluções completas exigidas para que o algoritmo pare
 carregaPais = 0     #se pais dos cruzamentos devem ser adicionados a C
 tryCompl = 50
 gotCompl = 0
@@ -48,13 +48,13 @@ nCruz = 1       #nº soluções filhas adicionadas no cruzamento
 fatorTop = 0.3  #nº soluções que sobrevivem na seleção Deterministica final
 fatorRol = 0.3  #nº soluções que sobrevivem na seleção Roleta final
 fatorMinServ = 0.3 # tamanho minimo do serviço em numero de viagens 
-minViagAlm = 4
 fatorDelServ = 0.1 # quantos serviços bons devem ser deletados
+minViagAlm = 3
 
 jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
 almGlob = dtm.timedelta(hours = 0.5)    #duracao fixa da colacao
 intervPontaGlob = dtm.timedelta(hours=0.5)
-minInicAlm = dtm.timedelta(hours=2.5)
+minInicAlm = dtm.timedelta(hours=1.5)
 maxFimAlm = dtm.timedelta(hours=1)
 
 # Inputs e Outputs
@@ -73,6 +73,7 @@ popQuase = pp.Populacao(10, 'q')
 igl = 0
 custosIguais = 0
 solCompl = 0
+algStart = 0 # Horário de Inicialização
 
 ### LEITURA DO ARQUIVO DE INPUT ############
 dfv = pd.read_csv(inputViags, sep=';', index_col=0) 
