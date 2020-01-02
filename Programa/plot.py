@@ -9,6 +9,7 @@ import variaveisGlobais as gl
 
 import pandas as pd
 import plotly.express as px
+import datetime
 
 def conv(iExec):
     fileConv= open(gl.folder+ "output\\"+str(iExec)+"\\convergencia.txt")
@@ -17,3 +18,31 @@ def conv(iExec):
     yplot = list(dfconv['custo'])+ list(dfconv['custoG'])+list(dfconv['custoH'])
     figconv = px.scatter(x=xplot, y=yplot)
     figconv.show()
+
+def outConv(fileConv, sol):
+    conv = open(fileConv, 'a')
+    conv.write('\n'+str(datetime.datetime.now)+';'+str(gl.igl)+';'+str(sol.idsol)+';'+str(len(sol.viagSol))+';'+str(len(sol.servs))+';'+str(sol.custo().total_seconds())+';'+str(sol.custog().total_seconds())+';'+str(sol.custoh().total_seconds()))
+    conv.close()
+
+def folgas(iExec, pop):
+    fileFolgas= gl.folder+ "output\\"+str(iExec)+"\\folgas_"+str(pop.nome)+".txt"
+    
+    folg = open(fileFolgas, 'w')
+    folg.write("População "+str(pop.nome))
+    
+    for sol in pop.sols:
+        folgas = []
+        ids = list(pop.sols[sol].servs)
+        ids.sort(key= lambda idserv: pop.sols[sol].servs[idserv].jornI())
+        for serv in ids: folgas.append(pop.sols[sol].servs[serv].folgaE().total_seconds() + pop.sols[sol].servs[serv].folgaI().total_seconds())
+
+        # salva em txt
+        folg.write("\nSolução "+str(pop.sols[sol].idsol))
+        folg.write("\nidserv;folgaTotal")
+        for i in len(ids): folg.write("\n"+str(ids[i])+";"+str(folgas[i]))
+        
+        # plota em imagem
+        #figfolgas = px.scatter(x=xplot, y=yplot)
+        #figfolgas.show()
+
+    folg.close()

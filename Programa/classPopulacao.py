@@ -64,7 +64,7 @@ class Populacao:
             return list(nchoices), False
         else:
             nchoices = np.random.choice(nlist, size=n, replace=False)
-            gl.logf.write("somac = 0 - Roleta com pesos iguais")
+            #gl.logf.write("somac = 0 - Roleta com pesos iguais")
             gl.custosIguais = gl.custosIguais+1
             return list(nchoices), True # retorna que deu erro!
     

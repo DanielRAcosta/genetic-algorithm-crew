@@ -20,18 +20,13 @@ import os
 def guardaExecucao(popA,popB,popC, outputPopFolder):
     pp.outpop(popA, 'a', outputPopFolder)    
     pp.outpop(popB, 'b', outputPopFolder)    
-    pp.outpop(popC, 'c', outputPopFolder)    , outputPopFolder, outputPopFolder
+    pp.outpop(popC, 'c', outputPopFolder)
     pp.outpop(gl.popCompl, 'f', outputPopFolder)
     pp.outpop(gl.popQuase, 'q', outputPopFolder)
     pp.outpop(gl.idsolGlob, 'id', outputPopFolder)
-    
-def outConv(fileConv, sol, iAlg):
-    # convergencia.txt
-    conv = open(fileConv, 'a')
-    conv.write('\n'+str(iAlg)+','+str(sol.idsol)+','+str(len(sol.viagSol))+','+str(len(sol.servs))+','+str(sol.custo().total_seconds())+','+str(sol.custog().total_seconds())+','+str(sol.custoh().total_seconds()))
-    conv.close()
+    # guardar iAlg tbm
 
-def principal(iAlg,popA,popB,popC, outputPopFolder):
+def principal(popA,popB,popC, outputPopFolder):
     popC.sols.clear() #esvazia B para recomeçar
     
     ### CRUZAMENTO ############
@@ -62,7 +57,7 @@ def principal(iAlg,popA,popB,popC, outputPopFolder):
             filho, alterou = popA.sols[jSol].cruza(popA.sols[iSol]) #filho AC
             if alterou: popC.addSolCheck(filho)
         
-        if iAlg+gl.modo_inicio>1: # cruza com popB - apenas se popB já existe
+        if gl.igl+gl.modo_inicio>1: # cruza com popB - apenas se popB já existe
             for jSol in popB.selecRoleta(gl.nCruz,[])[0]:  #cruza com popB até um nCruz numero de vezes               
                 filho, alterou = popA.sols[iSol].cruza(popB.sols[jSol]) #filho CB
                 if alterou: popC.addSolCheck(filho)
@@ -104,9 +99,9 @@ def principal(iAlg,popA,popB,popC, outputPopFolder):
     
     ### SAÍDA DE DADOS #####
 
-    print(iAlg, len(gl.popCompl.sols), popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol()) # plota na tela o número máximo de viagens
+    print(gl.igl, len(gl.popCompl.sols), popA.sizeViagSol(), popB.sizeViagSol(), popC.sizeViagSol()) # plota na tela o número máximo de viagens
          
-    if float(iAlg/30).is_integer(): # a cada 30 iterações
+    if float(gl.igl/30).is_integer(): # a cada 30 iterações
         gl.popQuase.excluiDet()
         if gl.modo_salva == 1: guardaExecucao(popA,popB,popC, outputPopFolder)
         
@@ -121,28 +116,32 @@ def prog(iExec):
     global popA
     global popB
     global popC
+
+    algStart = datetime.datetime.now() # Horário de Inicialização
     
+    # Outputs de Convergência e de Atributos
     outputPopFolder = str(iExec)
+    
     if not os.path.exists(gl.folder + "output\\"+outputPopFolder +"\\"): os.mkdir(gl.folder + "output\\"+outputPopFolder +"\\")
-    if not os.path.exists(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\"): os.mkdir(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\")
+    if not os.path.exists(gl.folder+"output\\"+outputPopFolder+"\\gantt\\"): os.mkdir(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\")
+    
+    
     fileConv = gl.folder+ "output\\"+outputPopFolder+"\\convergencia.txt"
     fileAtrib = gl.folder+ "output\\"+outputPopFolder+"\\atributos.txt"
+    
     if os.path.exists(fileConv): os.remove(fileConv) # não deixar que o txt da convergencia seja reescrito
     if os.path.exists(fileAtrib): os.remove(fileAtrib) # não deixar que o txt da convergencia seja reescrito
     
-    # Inicialização
-    algStart = datetime.datetime.now()
-    
-    # inicializa plot convergência
     conv = open(fileConv, 'w')
-    conv.write("\niAlg,idSol mais barata,nViagens,nServs,custo,custoG,custoH")
-    conv.close()
-    
-    # inicializa arquivo atributos
     atrib = open(fileAtrib, 'w')
+    conv.write("\nhorario;iAlg;idSol mais barata;nViagens;nServs;custo;custoG;custoH")    
     atrib.write(str(algStart))
+    conv.close()
     atrib.close()
-                      
+
+    iAlg = 0  
+
+    ### INICIALIZA ALGORITMO ###
     if gl.modo_inicio == 0:
 
         popA = pp.Populacao(gl.na, 'A')
@@ -164,32 +163,31 @@ def prog(iExec):
     ### EXECUTA LAÇO PRINCIPAL ###
     if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
         for iAlg in range(1,gl.alg+1):
-            popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
-            outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
+            gl.igl = iAlg
+            popA,popB,popC = principal(popA,popB,popC, outputPopFolder)
+            plot.outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]])
     elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
-        iAlg = 0  
         gl.solCompl = 0
         while gl.solCompl < gl.nCompl:
             iAlg = iAlg +1
-            popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
-            outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
+            gl.igl = iAlg
+            popA,popB,popC = principal(popA,popB,popC, outputPopFolder)
+            plot.outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]])
     elif gl.modo_fim ==2: # modo 2 - itera até atingir alguma completa e tentar tryCompl iterações
-        iAlg = 0  
         gl.solCompl = 0
         gl.gotCompl = 0
         while gl.gotCompl < gl.tryCompl:
             iAlg = iAlg +1
-            popA,popB,popC = principal(iAlg,popA,popB,popC, outputPopFolder)
-            outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]], iAlg)
+            gl.igl = iAlg
+            popA,popB,popC = principal(popA,popB,popC, outputPopFolder)
+            plot.outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]])
             
-    # Finalização
-    # guarda as populações num arquivo pickle para usar depois
-    if gl.modo_salva == 1: guardaExecucao(popA,popB,popC, outputPopFolder)
-    # anota atributos restantes
-    algEnd = datetime.datetime.now()
+    ### FINALIZA ALGORITMO ###
+    if gl.modo_salva == 1: guardaExecucao(popA,popB,popC, outputPopFolder) # guarda as populações num arquivo pickle para usar depois
+    
+    algEnd = datetime.datetime.now() # Horário de Finalização
     atrib = open(fileAtrib, 'w')
-    atrib.write(str(gl.gotCompl)+str(iAlg)+str(algEnd)+str(algEnd-algStart))
-    #escrever ate qual iteração foi
+    atrib.write(str(gl.gotCompl)+str(gl.igl)+str(algEnd)+str(algEnd-algStart))  # Armazenar até qual iteração foi e quantas completas
     atrib.close()
     
     # plotar todos os gantts
@@ -199,11 +197,9 @@ def prog(iExec):
     if len(gl.popCompl.sols)>0 :gl.popCompl.gantt(outputPopFolder)
     if len(gl.popQuase.sols)>0 :gl.popQuase.gantt(outputPopFolder)
     
-    plot.conv(iExec)
+    #plot.conv(iExec)
+    plot.folgas(iExec, gl.popCompl)
     
 prog(16502)
-    # plotar melhor gantt dessa execução
-    # ainda não é bom sem a supervisao humana
-    #idBest = [popA.selecFinal(), popA.selecFinal(),popA.selecFinal(),popA.selecFinal(),popA.selecFinal()]
 
     

@@ -20,6 +20,7 @@ class Solucao:
         gl.idsolGlob = gl.idsolGlob + 1 #adiciona ao contador global de soluções
         
         self.idsol = gl.idsolGlob #identifica a solução atual
+        self.iAlgSol = gl.igl # diz em qual iteração foi criada
         self.servs = {0: servx}  #inicializa dicionario de serviços e insere o primeiro
         self.viagSol = copy.deepcopy(servx.viags) #copia lista de viagens do serviço para usar na solução
         self.idpais = idpais
@@ -230,7 +231,7 @@ class Solucao:
             df.append(dict(Task=str(serv), Start =self.servs[serv].jornF()-gl.intervPontaGlob, Finish=self.servs[serv].jornF(), Resource='Recolhe'))
             #df.append(dict(Task=str(serv), Start =self.servs[serv].jornI()+gl.intervPontaGlob, Finish=self.servs[serv].jornF()-gl.intervPontaGlob, Resource='Jornada'))
         
-        titulo = "["+str(outputPopFolder)+"] pop"+popname+" - Sol "+str(self.idsol)+" - nViags "+str(len(self.viagSol))+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])+" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"
+        titulo = "["+str(outputPopFolder)+"] pop"+popname+" - Sol "+str(self.idsol)+" - nViags "+str(len(self.viagSol))+" - it "+str(self.iAlgSol) +" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"#+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])
         colors = dict(Viagens='rgb(219,0,0)', Almoço=(0.95,0.9,0.17), Recolhe='rgb(150,0,150)',Jornada='rgb(255,255,255)')
         
         fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True, group_tasks=True, title=titulo)

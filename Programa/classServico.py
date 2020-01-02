@@ -47,9 +47,9 @@ class Servico:
 
     def jornV(self): return self.hf()-self.hi()
     
-    def jornI(self): return self.hi() + self.jornV()/2 - self.jorn/2 # Jornada apenas para visualizar no Gantt, centralizada
+    def jornI(self): return self.hi() + self.jornV()/2 - self.jorn/2 # Inicio da jornada apenas para visualizar no Gantt, centralizada
     
-    def jornF(self): return self.jornI() + self.jorn # Jornada apenas para visualizar no Gantt, centralizada
+    def jornF(self): return self.jornI() + self.jorn # Fim da jornada apenas para visualizar no Gantt, centralizada
     
     def horaPico(self): return sum([gl.vdict['pp'][vx] for vx in self.viags])*dtm.timedelta(hours = 6)
 

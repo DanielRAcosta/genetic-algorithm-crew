@@ -21,7 +21,7 @@ inputViags = folder + "v_input_"+linha+".csv"
 # Controle macro
 alg = 10000             # n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
 modo_inicio =0     # 0 = do zero                       1 = ler do binário
-modo_fim = 2        # 0 = até iAlg=alg                  1 = até ter nCompl soluções completas     2 = até ter completas e tentar algumas
+modo_fim = 1        # 0 = até igl=alg                  1 = até ter nCompl soluções completas     2 = até ter completas e tentar algumas
 modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
 nCompl = 10         #nº soluções completas exigidas para que o algoritmo pare
 carregaPais = 0     #se pais dos cruzamentos devem ser adicionados a C
@@ -49,6 +49,7 @@ fatorTop = 0.3  #nº soluções que sobrevivem na seleção Deterministica final
 fatorRol = 0.3  #nº soluções que sobrevivem na seleção Roleta final
 fatorMinServ = 0.3 # tamanho minimo do serviço em numero de viagens 
 minViagAlm = 4
+fatorDelServ = 0.1 # quantos serviços bons devem ser deletados
 
 jornGlob = dtm.timedelta(hours = 7.5)  #duraçao fixa da jornada a considerar de início
 almGlob = dtm.timedelta(hours = 0.5)    #duracao fixa da colacao
@@ -69,6 +70,7 @@ elif modo_inicio==1:
     popCompl = pp.inpop('f') # População para guardar Soluções Completas - herdada do pickle
     #popCompl = pp.Populacao(nCompl, 'f') # População para guardar Soluções Completas - não herdada
 popQuase = pp.Populacao(10, 'q')
+igl = 0
 custosIguais = 0
 solCompl = 0
 
