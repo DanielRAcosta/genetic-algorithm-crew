@@ -13,19 +13,19 @@ import pandas as pd
 import os
 
 # Caminhos das Pastas
-inputPopFolder = '23'
+inputPopFolder = '25'
 linha = '165'
 folder = "C:\\Users\\"+ os.getlogin() +"\\Google Drive\\TCC Daniel Acosta\\GitHub\\genetic-algorithm-crew\\Programa\\"
 inputViags = folder + "v_input_"+linha+".csv"
 
 # Controle macro
 alg = 10000             # n° iterações do algoritmo (usar enquanto eu não estabelecer outro critério)
-modo_inicio =0     # 0 = do zero                       1 = ler do binário
+modo_inicio =1     # 0 = do zero                       1 = ler do binário
 modo_fim = 1        # 0 = até igl=alg                  1 = até ter nCompl soluções completas     2 = até ter completas e tentar algumas
 modo_salva = 1      # 0 = não salva no pickle           1 = salva no pickle
-nCompl = 5         #nº soluções completas exigidas para que o algoritmo pare
+nCompl = 4         #nº soluções completas exigidas para que o algoritmo pare
 carregaPais = 0     #se pais dos cruzamentos devem ser adicionados a C
-tryCompl = 50
+tryCompl = 10000
 gotCompl = 0
 
 # Pesos dos custos

@@ -21,7 +21,7 @@ def conv(iExec):
 
 def outConv(fileConv, sol):
     conv = open(fileConv, 'a')
-    conv.write('\n'+str(datetime.datetime.now)+';'+str(gl.igl)+';'+str(sol.idsol)+';'+str(len(sol.viagSol))+';'+str(len(sol.servs))+';'+str(sol.custo().total_seconds())+';'+str(sol.custog().total_seconds())+';'+str(sol.custoh().total_seconds()))
+    conv.write('\n'+str(datetime.datetime.now())+';'+str(gl.igl)+';'+str(sol.idsol)+';'+str(len(sol.viagSol))+';'+str(len(sol.servs))+';'+str(sol.custo().total_seconds())+';'+str(sol.custog().total_seconds())+';'+str(sol.custoh().total_seconds()))
     conv.close()
 
 def folgas(iExec, pop):

@@ -117,7 +117,10 @@ def prog(iExec):
     global popA
     global popB
     global popC
-
+    
+    gl.custosIguais = 0
+    gl.solCompl = 0
+    
     gl.algStart = datetime.datetime.now() # Horário de Inicialização
     
     # Outputs de Convergência e de Atributos
@@ -168,7 +171,7 @@ def prog(iExec):
             popA,popB,popC = principal(popA,popB,popC, outputPopFolder)
             plot.outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]])
     elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
-        gl.solCompl = 0
+        gl.solCompl = 4
         while gl.solCompl < gl.nCompl:
             iAlg = iAlg +1
             gl.igl = iAlg
@@ -201,6 +204,5 @@ def prog(iExec):
     #plot.conv(iExec)
     plot.folgas(iExec, gl.popCompl)
     
-prog(20)
 
-    
+prog(55)
