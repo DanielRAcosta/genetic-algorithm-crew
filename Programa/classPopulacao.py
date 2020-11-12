@@ -105,5 +105,14 @@ class Populacao:
     
     def gantt(self, outputPopFolder):
         for sol in self.sols: self.sols[sol].gantt(outputPopFolder, self.nome)
+        
+    def resta(self): return len(gl.vdict['hi']) - max([len(self.sols[iSol].viagSol) for iSol in self.sols])
+    
+    def resumo(self):
+        resFile = open(gl.folder+'resumo_'+self.nome+'.txt','a')
+        resFile.write('Resumo População '+self.nome+' / npop = '+str(self.npop)+'\nid, Iteração Origem, Quantidade de Serviços, Custo (s), Folgas Externas (s), Folgas Internas (s)')
+        for i in self.sols:
+            resFile.write('\n'+str(i)+','+str(self.sols[i].iAlgSol)+','+str(len(self.sols[i].servs))+','+str(self.sols[i].custo().total_seconds())+','+str(self.sols[i].folgaE().total_seconds())+','+str(self.sols[i].folgaI().total_seconds()))
+        resFile.close()
 
 # FUNÇÕES PICKLE - precisam agir fora da classe População

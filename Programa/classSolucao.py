@@ -13,6 +13,7 @@ import classServico as sv
 import plotly.figure_factory as ff
 import datetime as dtm
 import random as rd
+import pandas as pd
 import numpy as np
 import math
 import copy
@@ -32,7 +33,7 @@ class Solucao:
     def sortV(self): self.viagSol.sort(key=lambda vx : gl.vdict['hi'][vx])    
 
     def servIncompleto(self, serv, ok):
-        if ok: gl.popQuase.addSolCheck(self.geraCopia())
+        #if ok: gl.popQuase.addSolCheck(self.geraCopia())
         ok = False
         for vx in self.servs[serv].viags: self.viagSol.remove(vx)
         self.servs.pop(serv)
@@ -236,5 +237,142 @@ class Solucao:
         titulo = "["+str(outputPopFolder)+"] pop"+popname+" - Sol "+str(self.idsol)+" - nViags "+str(len(self.viagSol))+" - it "+str(self.iAlgSol) +" - Folga Real "+str(round((self.folgaE().total_seconds()+self.folgaI().total_seconds())/3600,2))+"h"#+" - Pais "+str(self.idpais[0])+" e "+str(self.idpais[1])
         colors = dict(Viagens='rgb(219,0,0)', Almoço=(0.95,0.9,0.17), Recolhe='rgb(150,0,150)',Jornada='rgb(255,255,255)')
         
-        fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True, group_tasks=True, title=titulo)
+        fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True, group_tasks=True, title=titulo, showgrid_x=True)
         fig.write_image(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\"+str(outputPopFolder)+"_pop"+popname+"_"+str(self.idsol)+".png")
+
+    def fu_input(self):
+        esc = pd.read_csv(gl.folder+"escalinha.csv", sep=';', encoding='latin-1')
+        
+        
+        for i in range(len(esc)):
+            esc.iloc[i,4] = dtm.datetime(2020,11,12,int(esc.iloc[i,4][0:2]),int(esc.iloc[i,4][3:5]))
+            esc.iloc[i,5] = dtm.datetime(2020,11,12,int(esc.iloc[i,5][0:2]),int(esc.iloc[i,5][3:5]))
+            esc.iloc[i,7] = esc.iloc[i,5] - esc.iloc[i,4] 
+        
+        print(esc.iloc[0,:])                             
+        #start = min(esc['ij'])
+        zh = dtm.datetime(2020,11,12,0,0) #zero hora, inicio
+        #fh = np.zeros(len(esc['ij']))
+        fh = {}
+        
+        for i in range(len(esc)): 
+            inicio = esc.iloc[i,4] #inicio da jornada
+            fim = esc.iloc[i,5]
+            col = np.zeros((24,), dtype=int)
+            
+            for j in range(0,24):
+                faixai = zh + dtm.timedelta(hours = j)
+                faixaf = zh + dtm.timedelta(hours = j+1)
+            
+                if faixaf > inicio:
+                    if faixai < inicio and faixaf - inicio > dtm.timedelta(hours = 0.5): col[j] = 1
+                    elif faixaf < fim: col[j] = 1
+                    elif faixai < fim:
+                        if fim - faixai > dtm.timedelta(hours = 0.5): col[j] = 1
+                        
+            fh.update({i: col})
+            
+        print("##### Serviços:")
+        for i in range(len(esc)): print(i, fh[i])
+        
+        veiculo = np.zeros((24,), dtype=int)
+        for j in range(0,24):
+            for i in range(len(esc)):
+                veiculo[j] = veiculo[j] + fh[i][j] #somatorio de todos os serviços
+        
+        #for i in range(0,9): veiculo[i] = veiculo[i] + veiculo[i+24] #passa de 32h pra 24h
+        
+        
+        print("\n##### Escalas por faixa horária: ")
+        for i in range(0,24): print(i, veiculo[i])
+        veiculo = veiculo[0:24]
+        maxveic = max(veiculo)
+        porcento = [i/maxveic for i in veiculo]
+        print("\n##### Porcentagem em relação ao máximo de veículos: ")
+        for i in range(0,24): print(i, porcento[i])
+        
+        #campos usados na planilha GEIPOT
+        a = sum(porcento)
+        print("\nA = ", a, "(Duração equivalente da operação)")
+        print("B = ", gl.jornGlob.seconds/60/60, " horas (Jornada Diária de Trabalho)")
+        c = dtm.timedelta(hours = a)/gl.jornGlob
+        print("C = ", c, " (Coeficiente de Utilização em Horas Normais)")
+        d = max([0,c-2])
+        print("D = ", d, " (Horas Extras)")
+        e = c-d
+        print("E = ", e, " (Horas Normais)")
+        f = e+d*1.5
+        print("F = ", f, " (Coeficiente de Utilização)")
+        g = 0.1544
+        print("G = ", g, " (Percentual de Pessoal para Cobrir Folgas, Férias e Reserva)")
+        h = f*g
+        print("H = ", h, " (Pessoal para Cobrir Folgas, Férias e Reserva)")
+        print("FU = F+H = ", f+h, " (Fator de Utilização)")
+        return f+h                   
+    
+    def fu(self): #calcula o fator de utilização - SELF = classe Solução
+        # self.servs = lista de serviços da solução
+        # hi/hf = horarios inicial e final do serviço
+    
+        hiList = [self.servs[i].hi() for i in self.servs] 
+        iList = [i for i in self.servs]
+        
+        start = min(hiList)
+        zh = min(hiList) - dtm.timedelta(microseconds = start.microsecond) - dtm.timedelta(seconds = start.second) - dtm.timedelta(minutes = start.minute) - dtm.timedelta(hours = start.hour)
+        fh = {}
+        
+        for i in iList:
+            inicio = hiList[i]
+            fim = hiList[i] + gl.jornGlob
+            col = np.zeros((33,), dtype=int) 
+            
+            for j in range(0,33): #faixa horaria começa meia noite e termina 8h da manhã no dia seguinte (32h), depois soma pra virar 24h
+                faixai = zh + dtm.timedelta(hours = j)
+                faixaf = zh + dtm.timedelta(hours = j+1)
+
+                if faixaf > inicio:
+                    if faixai < inicio and faixaf - inicio > dtm.timedelta(hours = 0.5): col[j] = 1
+                    elif faixaf < fim: col[j] = 1
+                    elif faixai < fim:
+                        if fim - faixai > dtm.timedelta(hours = 0.5): col[j] = 1
+                        
+            fh.update({i: col})     
+            
+        print("##### Serviços:")
+        for i in iList: print(i, fh[i])
+        
+        veiculo = np.zeros((33,), dtype=int)
+        for j in range(0,33):
+            for i in iList:
+                veiculo[j] = veiculo[j] + fh[i][j] #somatorio de todos os serviços
+        
+        for i in range(0,9): veiculo[i] = veiculo[i] + veiculo[i+24] #passa de 32h pra 24h
+        
+        
+        print("\n##### Veículos por faixa horária: ")
+        for i in range(0,24): print(i, veiculo[i])
+        veiculo = veiculo[0:24]
+        maxveic = max(veiculo)
+        porcento = [i/maxveic for i in veiculo]
+        print("\n##### Porcentagem em relação ao máximo de veículos: ")
+        for i in range(0,24): print(i, porcento[i])
+        
+        #campos usados na planilha GEIPOT
+        a = sum(porcento)
+        print("\nA = ", a, "(Duração equivalente da operação)")
+        print("B = ", gl.jornGlob.seconds/60/60, " horas (Jornada Diária de Trabalho) [fixa]")
+        c = dtm.timedelta(hours = a)/gl.jornGlob
+        print("C = ", c, " (Coeficiente de Utilização em Horas Normais)")
+        d = max([0,c-2])
+        print("D = ", d, " (Horas Extras)")
+        e = c-d
+        print("E = ", e, " (Horas Normais)")
+        f = e+d*1.5
+        print("F = ", f, " (Coeficiente de Utilização)")
+        g = 0.1544
+        print("G = ", g, " (Percentual de Pessoal para Cobrir Folgas, Férias e Reserva)")
+        h = f*g
+        print("H = ", h, " (Pessoal para Cobrir Folgas, Férias e Reserva)")
+        print("FU = F+H = ", f+h, " (Fator de Utilização)")
+        return f+h
+        
