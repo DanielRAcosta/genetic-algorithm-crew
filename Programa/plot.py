@@ -11,20 +11,27 @@ import pandas as pd
 import plotly.express as px
 import datetime
 
-def conv(iExec):
+def convFinal(iExec): #plot da convergencia
     fileConv= open(gl.folder+ "output\\"+str(iExec)+"\\convergencia.txt")
-    dfconv = pd.read_csv(fileConv, sep=',')
+    dfconv = pd.read_csv(fileConv, sep=';')
     xplot = list(dfconv['iAlg']) + list(dfconv['iAlg']) + list(dfconv['iAlg'])
     yplot = list(dfconv['custo'])+ list(dfconv['custoG'])+list(dfconv['custoH'])
     figconv = px.scatter(x=xplot, y=yplot)
-    figconv.show()
+    #figconv.show()
+    figconv.write_image(gl.folder+"output\\"+str(iExec)+"\\convergencia.png")
 
-def outConv(fileConv, sol):
+def outConv(fileConv, sol): #csv da convergencia a cada iteração
     conv = open(fileConv, 'a')
     conv.write('\n'+str(datetime.datetime.now())+';'+str(gl.igl)+';'+str(sol.idsol)+';'+str(len(sol.viagSol))+';'+str(len(sol.servs))+';'+str(sol.custo().total_seconds())+';'+str(sol.custog().total_seconds())+';'+str(sol.custoh().total_seconds()))
     conv.close()
+    
+def outExec(fileOutl,iExec,sizea,sizeb,sizec,restantes): #informações de andamento que aparecem na tela, plota tanto na tela quanto num txt
+    print('Execução '+ str(iExec) + ', Iteração ' + str(gl.igl)+ ' | '+str(len(gl.popCompl.sols))+' soluções completas | Pop SizeViagSol = max/min ~ A='+str(sizea)+', B='+str(sizeb)+', C='+str(sizec)+' | Restam '+str(restantes)+' viagens' ) 
+    outl = open(fileOutl, 'a')
+    outl.write('\n'+str(iExec)+';'+str(gl.igl)+';'+str(len(gl.popCompl.sols))+';'+str(sizea)+';'+str(sizeb)+';'+str(sizec)+';'+str(restantes))
+    outl.close()
 
-def folgas(iExec, pop):
+def folgasFinal(iExec, pop):
     fileFolgas= gl.folder+ "output\\"+str(iExec)+"\\folgas_"+str(pop.nome)+".txt"
     
     folg = open(fileFolgas, 'w')

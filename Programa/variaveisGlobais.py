@@ -4,13 +4,16 @@ Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritm
 Daniel Rodrigues Acosta
 Universidade Federal do Rio Grande do Sul
 Junho/2019
+
+Variáveis Globais
 """
 
-import classPopulacao as pp
+#import classPopulacao as pp
 
 import datetime as dtm
 import pandas as pd
 import os
+import pickle as pk
 
 # Caminhos das Pastas
 inputPopFolder = '25'
@@ -61,15 +64,39 @@ maxFimAlm = dtm.timedelta(hours=1)
 if not os.path.exists(folder + "output\\"): os.mkdir(folder + "output\\")
 if not os.path.exists(folder+"output\\img"): os.mkdir(folder+"output\\img")
 
+def inpop(nomepop):
+    pkfile = open(folder+'output\\'+inputPopFolder+'\\pop_'+nomepop+'.txt', mode='br')
+    return pk.load(pkfile)
+    pkfile.close()
+    
+def outpop(pop, nome, outputPopFolder):
+    pasta = folder+'output\\'+outputPopFolder
+    if not os.path.exists(pasta): os.mkdir(pasta)
+    nomefile = pasta+'\\pop_'+nome+'.txt'
+    if os.path.exists(nomefile): os.remove(nomefile)
+    pkfile = open(nomefile, mode='bw')
+    pk.dump(pop,pkfile)
+    pkfile.close()
+    
+def ler_tempo(primeira,ultima): #reunir atributos de todas as execuções em um único arquivo
+    execs = open(folder+"tempo_execs.txt",'w')
+    execs.write("exec;horario inicio;iAlg;horario fim;delta horario")
+    for ex in range(primeira,ultima+1):
+        atrib = open(folder+"output\\"+str(ex)+"\\atributos.txt", 'r')    
+        execs.write("\n"+str(ex)+atrib.readline())
+        atrib.close()
+    execs.close()
+
 # Contadores
 if modo_inicio==0:
     idsolGlob = 0   #contador de soluções global, para o identificador IDSOL
-    popCompl = pp.Populacao(nCompl, 'f') # População para guardar Soluções Completas
+    #popCompl = pp.Populacao(nCompl, 'f') # População para guardar Soluções Completas
+    popCompl = inpop('f')
 elif modo_inicio==1:
-    idsolGlob = pp.inpop('id')
-    popCompl = pp.inpop('f') # População para guardar Soluções Completas - herdada do pickle
+    idsolGlob = inpop('id')
+    popCompl = inpop('f') # População para guardar Soluções Completas - herdada do pickle
     #popCompl = pp.Populacao(nCompl, 'f') # População para guardar Soluções Completas - não herdada
-popQuase = pp.Populacao(10, 'q')
+#popQuase = pp.Populacao(10, 'q')
 igl = 0
 custosIguais = 0
 solCompl = 0
@@ -143,4 +170,5 @@ durMediaViags = sum(dursViags, dtm.timedelta(0))/len(dursViags)
 hmus = almGlob + dtm.timedelta(hours=1) # 2h de intervalos (30min / 1h / 30min) - estimativa da folga mínima que se pode alcançar em um serviço
 viagsPorServ = (jornGlob-hmus) / durMediaViags 
 meioTab = min(vdict['hi'].values()) + (max(vdict['hf'].values())-min(vdict['hi'].values()))/2
+
 

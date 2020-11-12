@@ -3,14 +3,15 @@ Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritm
 Daniel Rodrigues Acosta
 Universidade Federal do Rio Grande do Sul
 Junho/2019
+
+Classe População
 """
 
 import variaveisGlobais as gl
 
 import random as rd
 import numpy as np
-import pickle as pk
-import os
+
 
 class Populacao:
     def __init__(self, npop, nome):       #única classe que pode ser inicializada vazia (sem soluções)
@@ -106,17 +107,3 @@ class Populacao:
         for sol in self.sols: self.sols[sol].gantt(outputPopFolder, self.nome)
 
 # FUNÇÕES PICKLE - precisam agir fora da classe População
-
-def inpop(nome):
-    pkfile = open(gl.folder+'output\\'+gl.inputPopFolder+'\\pop_'+nome+'.txt', mode='br')
-    return pk.load(pkfile)
-    pkfile.close()
-    
-def outpop(pop, nome, outputPopFolder):
-    pasta = gl.folder+'output\\'+outputPopFolder
-    if not os.path.exists(pasta): os.mkdir(pasta)
-    nomefile = pasta+'\\pop_'+nome+'.txt'
-    if os.path.exists(nomefile): os.remove(nomefile)
-    pkfile = open(nomefile, mode='bw')
-    pk.dump(pop,pkfile)
-    pkfile.close()

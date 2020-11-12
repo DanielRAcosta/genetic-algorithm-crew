@@ -3,6 +3,8 @@ Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritm
 Daniel Rodrigues Acosta
 Universidade Federal do Rio Grande do Sul
 Junho/2019
+
+Classe Serviço
 """
 
 import variaveisGlobais as gl
