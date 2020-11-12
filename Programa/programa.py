@@ -3,6 +3,8 @@ Definição de Escala de Tripulação de Transporte Coletivo Utilizando Algoritm
 Daniel Rodrigues Acosta
 Universidade Federal do Rio Grande do Sul
 Junho/2019
+
+Algoritmo Principal
 """
 
 import variaveisGlobais as gl
@@ -26,10 +28,11 @@ def guardaExecucao(popA,popB,popC, outputPopFolder):
     pp.outpop(gl.idsolGlob, 'id', outputPopFolder)
     # guardar iAlg tbm
 
+#### Laço Iterativo Principal a ser chamado no Algoritmo abaixo
 def principal(popA,popB,popC, outputPopFolder):
     popC.sols.clear() #esvazia B para recomeçar
     
-    ### CRUZAMENTO ############
+    #### CRUZAMENTO ############
     # pra cada um dos nb melhores integrantes de A, de acordo com a função seleçãoDeterminística 
     
     pais1 = popA.selecDet(round(gl.fs*gl.na),[]) # seleciona os pais de A que servem como base
@@ -77,13 +80,14 @@ def principal(popA,popB,popC, outputPopFolder):
     # EXCLUI deterministicamente/roleta as piores dos grupos constantes popA, popB e popCompletas
     popA.excluiRol()
     popB.excluiRol()
-    gl.popQuase.excluiRol()
+    #gl.popQuase.excluiRol()
     
     ### MUTAÇÃO ############    
     for iSol in popC.sols: # mutação in-place
         if rd.random() < gl.pm:
             popC.sols[iSol].muta()
-            print("muta ",iSol)
+            #print("muta ",iSol)
+    
     
     ### SELEÇÃO ############
     
@@ -111,8 +115,7 @@ def principal(popA,popB,popC, outputPopFolder):
         
     return popA,popB,popC
        
-#### EXECUÇÃO DO ALGORITMO ####
-
+#### Algoritmo ####
 def prog(iExec):
     global popA
     global popB
@@ -123,12 +126,11 @@ def prog(iExec):
     
     gl.algStart = datetime.datetime.now() # Horário de Inicialização
     
-    # Outputs de Convergência e de Atributos
+    ### Inicializa Outputs de Convergência e de Atributos
     outputPopFolder = str(iExec)
     
     if not os.path.exists(gl.folder + "output\\"+outputPopFolder +"\\"): os.mkdir(gl.folder + "output\\"+outputPopFolder +"\\")
     if not os.path.exists(gl.folder+"output\\"+outputPopFolder+"\\gantt\\"): os.mkdir(gl.folder+"output\\"+str(outputPopFolder)+"\\gantt\\")
-    
     
     fileConv = gl.folder+ "output\\"+outputPopFolder+"\\convergencia.txt"
     fileAtrib = gl.folder+ "output\\"+outputPopFolder+"\\atributos.txt"
@@ -143,9 +145,8 @@ def prog(iExec):
     conv.close()
     atrib.close()
 
-    iAlg = 0  
-
     ### INICIALIZA ALGORITMO ###
+    iAlg = 0 
     if gl.modo_inicio == 0:
 
         popA = pp.Populacao(gl.na, 'A')
@@ -165,19 +166,20 @@ def prog(iExec):
         popC = pp.Populacao(gl.nc, 'C')  
     
     ### EXECUTA LAÇO PRINCIPAL ###
+    # Função Principal é chamada e tem como input e output as populações
     if gl.modo_fim == 0: # modo 0 - executa um numero finito de iterações
         for iAlg in range(1,gl.alg+1):
             gl.igl = iAlg
             popA,popB,popC = principal(popA,popB,popC, outputPopFolder)
             plot.outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]])
     elif gl.modo_fim ==1: #modo 1 - itera até atingir um certo numero de soluções completas
-        gl.solCompl = 4
+        gl.solCompl = 0 #contador de soluções completas já encontradas
         while gl.solCompl < gl.nCompl:
             iAlg = iAlg +1
             gl.igl = iAlg
             popA,popB,popC = principal(popA,popB,popC, outputPopFolder)
             plot.outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]])
-    elif gl.modo_fim ==2: # modo 2 - itera até atingir alguma completa e tentar tryCompl iterações
+    elif gl.modo_fim ==2: # modo 2 - itera até atingir alguma completa e tentar tryCompl iterações       
         gl.solCompl = 0
         gl.gotCompl = 0
         while gl.gotCompl < gl.tryCompl:
@@ -185,8 +187,9 @@ def prog(iExec):
             gl.igl = iAlg
             popA,popB,popC = principal(popA,popB,popC, outputPopFolder)
             plot.outConv(fileConv,popB.sols[popB.selecDet(1,[])[0]])
+        
             
-    ### FINALIZA ALGORITMO ###
+    ### Finaliza algoritmo ###
     if gl.modo_salva == 1: guardaExecucao(popA,popB,popC, outputPopFolder) # guarda as populações num arquivo pickle para usar depois
     
     algEnd = datetime.datetime.now() # Horário de Finalização
@@ -199,10 +202,8 @@ def prog(iExec):
     popB.gantt(outputPopFolder)
     popC.gantt(outputPopFolder)
     if len(gl.popCompl.sols)>0 :gl.popCompl.gantt(outputPopFolder)
-    if len(gl.popQuase.sols)>0 :gl.popQuase.gantt(outputPopFolder)
+    #if len(gl.popQuase.sols)>0 :gl.popQuase.gantt(outputPopFolder)
     
     #plot.conv(iExec)
     plot.folgas(iExec, gl.popCompl)
     
-
-prog(55)
